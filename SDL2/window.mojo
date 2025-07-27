@@ -69,4 +69,4 @@ struct GUIWin:
 
     fn draw_text(self, str: String, x: Int32, y: Int32):
         var surf = self.sdl_ttf.TTF_RenderTextSolid(self.fonts["default"], 24)
-        var tex = self.sdl.CreateTextureFromSurface(self.rendererssurf)
+        var tex = self.sdl.CreateTextureFromSurface(self.renderers[self.curr_render_i], surf)
