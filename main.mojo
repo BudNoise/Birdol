@@ -1,5 +1,6 @@
 # low quality zhar
 from SDL2 import *
+import Browser
 import random
 fn random_string(length: Int) -> String:
     var chars: String = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
