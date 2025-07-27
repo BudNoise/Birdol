@@ -22,6 +22,7 @@ fn main() raises:
         win.update_coords()
         win.set_draw_color(255, 255, 255, 255)
         win.clean_bg()
+        win.draw_text("There is NO Easter Bunny, \n There is NO Tooth Fairy \n and there is NO Queen of England", 200, 200)
         win.render()
         _ = win.sdl.Delay(16)
     win.sdl.DestroyWindow(win.window)

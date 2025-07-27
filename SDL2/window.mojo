@@ -66,7 +66,22 @@ struct GUIWin:
         var mode = SDL_DisplayMode()
         self.sdl.GetCurrentDisplayMode(0, UnsafePointer[SDL_DisplayMode](to=mode))
         return mode
+    
+    fn internal_text_drawing(self, str: String, x: Int32, y: Int32) raises:
+        var fnt = self.fonts["default"]
+        var lines = str.split('\n')
+        var spacing = self.sdl_ttf.TTF_FontLineSkip(fnt)
+        var curr_y = y
+        for line in lines:
+            var surf = self.sdl_ttf.TTF_RenderTextSolid(fnt, line.unsafe_ptr(), SDL_Color(0, 0, 0, 255))
+            var tex = self.sdl.CreateTextureFromSurface(self.renderers[self.curr_render_i], surf)
 
-    fn draw_text(self, str: String, x: Int32, y: Int32):
-        var surf = self.sdl_ttf.TTF_RenderTextSolid(self.fonts["default"], 24)
-        var tex = self.sdl.CreateTextureFromSurface(self.renderers[self.curr_render_i], surf)
+            # put the result in the renderer
+            var rect = SDL_Rect(x, curr_y, 0, 0)
+            self.sdl.QueryTexture(tex, UnsafePointer[UInt8](), UnsafePointer[UInt8](), UnsafePointer(to=rect.w), UnsafePointer(to=rect.h))
+            _ = self.sdl.RenderCopy(self.renderers[self.curr_render_i], tex, UnsafePointer[SDL_Rect](), UnsafePointer(to=rect))
+
+            curr_y += spacing
+
+    fn draw_text(mut self, str: String, x: Int32, y: Int32) raises:
+        self.internal_text_drawing(str, x, y)

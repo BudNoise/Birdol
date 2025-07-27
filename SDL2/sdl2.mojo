@@ -60,6 +60,11 @@ struct SDL_Rect:
     var y: Int32
     var w: Int32
     var h: Int32
+    fn __init__(out self, x: Int32, y: Int32, w: Int32, h: Int32):
+        self.x = x
+        self.y = y
+        self.w = w
+        self.h = h
 
 
 @register_passable("trivial")
@@ -300,8 +305,8 @@ alias c_SDL_SetRenderTarget = fn (
 alias c_SDL_RenderCopy = fn (
     r: UnsafePointer[SDL_Renderer],
     t: UnsafePointer[SDL_Texture],
-    s: Int64,
-    d: Int64,
+    s: UnsafePointer[SDL_Rect],
+    d: UnsafePointer[SDL_Rect],
 ) -> Int32
 
 # SDL_surface.h
@@ -355,6 +360,13 @@ alias c_SDL_GetCurrentDisplayMode = fn(
     Int32,
     UnsafePointer[SDL_DisplayMode],
 ) -> None
+alias c_SDL_QueryTexture = fn(
+    UnsafePointer[SDL_Texture],
+    UnsafePointer[UInt8], # make sure to be null
+    UnsafePointer[UInt8],
+    UnsafePointer[Int32], # w
+    UnsafePointer[Int32] # h
+) -> None
 
 
 
@@ -396,6 +408,8 @@ struct SDL:
     var SetWindowSize: c_SDL_SetWindowSize
     var SetWindowTitle: c_SDL_SetWindowTitle
     var GetCurrentDisplayMode: c_SDL_GetCurrentDisplayMode
+
+    var QueryTexture: c_SDL_QueryTexture
 
     fn __init__(out self) raises:
         var lib_path = get_sdl_lib_path()
@@ -475,6 +489,7 @@ struct SDL:
         self.SetWindowSize = SDL.get_function[c_SDL_SetWindowSize]("SDL_SetWindowSize")
         self.SetWindowTitle = SDL.get_function[c_SDL_SetWindowTitle]("SDL_SetWindowTitle")
         self.GetCurrentDisplayMode = SDL.get_function[c_SDL_GetCurrentDisplayMode]("SDL_GetCurrentDisplayMode")
+        self.QueryTexture = SDL.get_function[c_SDL_QueryTexture]("SDL_QueryTexture")
 
     fn get_sdl_error_as_string(self) -> String:
         var error_ptr = self.GetError()  # Call the function to get the error pointer

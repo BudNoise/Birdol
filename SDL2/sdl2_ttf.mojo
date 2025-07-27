@@ -35,36 +35,37 @@ alias c_TTF_OpenFontIndex = fn(
     Int32 # long index
 ) -> UnsafePointer[TTF_Font]
 alias c_TTF_CloseFont = fn(UnsafePointer[TTF_Font]) -> None
+alias c_TTF_FontLineSkip = fn(UnsafePointer[TTF_Font]) -> Int32
 
 alias c_TTF_RenderTextSolid = fn(
     UnsafePointer[TTF_Font], # font
     UnsafePointer[UInt8], # string
-    UnsafePointer[SDL_Color] # color
+    SDL_Color # color
 ) -> UnsafePointer[SDL_Surface]
 
 alias c_TTF_RenderTextUNICODESolid = fn(
     UnsafePointer[TTF_Font], # font
     UnsafePointer[UInt16], # string
-    UnsafePointer[SDL_Color] # color
+    SDL_Color # color
 ) -> UnsafePointer[SDL_Surface]
 
 alias c_TTF_RenderTextUTF8Solid = fn(
     UnsafePointer[TTF_Font], # font
     UnsafePointer[UInt8], # string
-    UnsafePointer[SDL_Color] # color
+    SDL_Color # color
 ) -> UnsafePointer[SDL_Surface]
 
 alias c_TTF_RenderTextShaded = fn(
     UnsafePointer[TTF_Font], # font
     UnsafePointer[UInt8], # string
-    UnsafePointer[SDL_Color], # fg 
-    UnsafePointer[SDL_Color] # bg
+    SDL_Color, # fg 
+    SDL_Color # bg
 ) -> UnsafePointer[SDL_Surface]
 
 alias c_TTF_RenderTextBlended = fn(
     UnsafePointer[TTF_Font], # font
     UnsafePointer[UInt8], # string
-    UnsafePointer[SDL_Color], # fg 
+    SDL_Color, # fg 
 ) -> UnsafePointer[SDL_Surface]
 
 struct SDL_TTF:
@@ -75,6 +76,7 @@ struct SDL_TTF:
     var TTF_OpenFont: c_TTF_OpenFont
     var TTF_OpenFontIndex: c_TTF_OpenFontIndex
     var TTF_CloseFont: c_TTF_CloseFont
+    var TTF_FontLineSkip: c_TTF_FontLineSkip
 
     var TTF_RenderTextSolid: c_TTF_RenderTextSolid
     var TTF_RenderTextShaded: c_TTF_RenderTextShaded
@@ -99,4 +101,4 @@ struct SDL_TTF:
         self.TTF_RenderTextUNICODESolid = SDLTTF.get_function[c_TTF_RenderTextUNICODESolid]("TTF_RenderUNICODE_Solid")
         self.TTF_RenderTextUTF8Solid = SDLTTF.get_function[c_TTF_RenderTextUTF8Solid]("TTF_RenderUTF8_Solid")
 
-
+        self.TTF_FontLineSkip = SDLTTF.get_function[c_TTF_FontLineSkip]("TTF_FontLineSkip")
