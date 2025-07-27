@@ -1,4 +1,5 @@
 from .sdl2 import *
+from .sdl2_ttf import *
 from memory import UnsafePointer
 
 struct GUIWin:
@@ -58,3 +59,6 @@ struct GUIWin:
         var mode = SDL_DisplayMode()
         self.sdl.GetCurrentDisplayMode(0, UnsafePointer[SDL_DisplayMode](to=mode))
         return mode
+
+    fn draw_text(self, x: Int32, y: Int32):
+        pass

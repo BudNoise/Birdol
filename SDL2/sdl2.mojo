@@ -90,6 +90,23 @@ struct SDL_DisplayMode:
         self.refresh_rate = 0
         self.driverdata = OpaquePointer()
 
+@register_passable("trivial")
+struct SDL_Color:
+    var r: UInt8
+    var g: UInt8
+    var b: UInt8
+    var a: UInt8
+    fn __init__(out self):
+        self.r = 0
+        self.g = 0
+        self.b = 0
+        self.a = 0
+    fn __init__(out self, r: UInt8, g: UInt8, b: UInt8, a: UInt8):
+        self.r = r
+        self.g = g
+        self.b = b
+        self.a = a
+
 
 @register_passable("trivial")
 struct SDL_Surface:
@@ -295,6 +312,9 @@ alias c_SDL_FillRect = fn (UnsafePointer[SDL_Surface], Int64, UInt32) -> Int32
 alias c_SDL_CreateTexture = fn (
     UnsafePointer[SDL_Renderer], UInt32, Int32, Int32, Int32
 ) -> UnsafePointer[SDL_Texture]
+alias c_SDL_CreateTextureFromSurface = fn (
+    UnsafePointer[SDL_Renderer], UnsafePointer[SDL_Surface]
+) -> UnsafePointer[SDL_Texture]
 alias c_SDL_DestroyTexture = fn (UnsafePointer[SDL_Texture]) -> None
 alias c_SDL_LockTexture = fn (
     UnsafePointer[SDL_Texture],
@@ -356,6 +376,7 @@ struct SDL:
     var RenderPresent: c_SDL_RenderPresent
     var RenderClear: c_SDL_RenderClear
     var CreateTexture: c_SDL_CreateTexture
+    var CreateTextureFromSurface: c_SDL_CreateTextureFromSurface
     var DestroyTexture: c_SDL_DestroyTexture
 
     var LockTexture: c_SDL_LockTexture
@@ -431,6 +452,9 @@ struct SDL:
 
         self.CreateTexture = SDL.get_function[c_SDL_CreateTexture](
             "SDL_CreateTexture"
+        )
+        self.CreateTextureFromSurface = SDL.get_function[c_SDL_CreateTextureFromSurface](
+            "SDL_CreateTextureFromSurface"
         )
         self.DestroyTexture = SDL.get_function[c_SDL_DestroyTexture](
             "SDL_DestroyTexture"
