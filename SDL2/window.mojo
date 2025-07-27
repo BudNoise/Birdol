@@ -24,8 +24,9 @@ struct GUIWin:
         self.window = self.sdl.CreateWindow(self.title.unsafe_ptr(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, SDL_WINDOW_SHOWN) # yay
         self.renderers.append(self.sdl.CreateRenderer(self.window, -1, SDL_RENDERER_ACCELERATED))
     
-    fn add_renderer(mut self):
+    fn add_renderer(mut self) -> Int32:
         self.renderers.append(self.sdl.CreateRenderer(self.window, -1, SDL_RENDERER_ACCELERATED))
+        return len(self.renderers) - 1
 
     fn set_curr_renderer(mut self, i: Int32):
         if i >= 0 and i < len(self.renderers):

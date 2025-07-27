@@ -12,6 +12,7 @@ fn random_string(length: Int) -> String:
 fn main() raises:
     var win = GUIWin("Birdol Browser", 1280, 720)
     var run = True
+    var tab = Browser.create_tab(UnsafePointer[GUIWin](to=win)) 
     while run:
         var event: Event = Event()
         while win.sdl.PollEvent(UnsafePointer[Event](to=event)):
