@@ -83,5 +83,11 @@ struct GUIWin:
 
             curr_y += spacing
 
+    fn get_text_height(self, str: String) raises -> Int32:
+        var fnt = self.fonts["default"]
+        var spacing = self.sdl_ttf.TTF_FontLineSkip(fnt)
+
+        return self.sdl_ttf.TTF_FontHeight(fnt) + (spacing * (len(str.split('\n')) + 1)) # scary spaghetti code i could perfectly make easier to read
+
     fn draw_text(mut self, str: String, x: Int32, y: Int32) raises:
         self.internal_text_drawing(str, x, y)

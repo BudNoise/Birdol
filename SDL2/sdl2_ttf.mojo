@@ -68,6 +68,10 @@ alias c_TTF_RenderTextBlended = fn(
     SDL_Color, # fg 
 ) -> UnsafePointer[SDL_Surface]
 
+alias c_TTF_FontHeight = fn(
+    UnsafePointer[TTF_Font], # font
+) -> Int32
+
 struct SDL_TTF:
     var TTF_Init: c_TTF_Init
     var TTF_WasInit: c_TTF_WasInit
@@ -77,6 +81,7 @@ struct SDL_TTF:
     var TTF_OpenFontIndex: c_TTF_OpenFontIndex
     var TTF_CloseFont: c_TTF_CloseFont
     var TTF_FontLineSkip: c_TTF_FontLineSkip
+    var TTF_FontHeight: c_TTF_FontHeight
 
     var TTF_RenderTextSolid: c_TTF_RenderTextSolid
     var TTF_RenderTextShaded: c_TTF_RenderTextShaded
@@ -102,3 +107,4 @@ struct SDL_TTF:
         self.TTF_RenderTextUTF8Solid = SDLTTF.get_function[c_TTF_RenderTextUTF8Solid]("TTF_RenderUTF8_Solid")
 
         self.TTF_FontLineSkip = SDLTTF.get_function[c_TTF_FontLineSkip]("TTF_FontLineSkip")
+        self.TTF_FontHeight = SDLTTF.get_function[c_TTF_FontHeight]("TTF_FontHeight")

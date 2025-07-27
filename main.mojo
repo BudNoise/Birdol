@@ -1,6 +1,7 @@
 # low quality zhar
 from SDL2 import *
 import Browser
+import HTML
 import random
 fn random_string(length: Int) -> String:
     var chars: String = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -13,6 +14,11 @@ fn main() raises:
     var win = GUIWin("Birdol Browser", 1280, 720)
     var run = True
     var tab = Browser.create_tab(UnsafePointer[GUIWin](to=win)) 
+    var testnode = HTML.HTMLNode(0)
+    testnode.data = {
+        "text": 'new super mario bros'
+    }
+    tab.curr_website.push_node(testnode)
     while run:
         var event: Event = Event()
         while win.sdl.PollEvent(UnsafePointer[Event](to=event)):
@@ -22,7 +28,7 @@ fn main() raises:
         win.update_coords()
         win.set_draw_color(255, 255, 255, 255)
         win.clean_bg()
-        win.draw_text("There is NO Easter Bunny, \n There is NO Tooth Fairy \n and there is NO Queen of England", 200, 200)
+        tab.render()
         win.render()
         _ = win.sdl.Delay(16)
     win.sdl.DestroyWindow(win.window)
