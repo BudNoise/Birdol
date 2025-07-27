@@ -23,9 +23,7 @@ alias c_TTF_Quit = fn() -> None
 
 @fieldwise_init
 struct TTF_Font(Copyable, Movable):
-    var nothing: Int
-    fn __init__(out self):
-        self.nothing = -2334
+    pass
 
 alias c_TTF_OpenFont = fn(
     UnsafePointer[UInt8], # file
@@ -94,11 +92,11 @@ struct SDL_TTF:
         self.TTF_OpenFontIndex = SDLTTF.get_function[c_TTF_OpenFontIndex]("TTF_OpenFontIndex")
         self.TTF_CloseFont = SDLTTF.get_function[c_TTF_CloseFont]("TTF_CloseFont")
 
-        self.TTF_RenderTextSolid = SDLTTF.get_function[c_TTF_RenderTextSolid]("TTF_RenderTextSolid")
-        self.TTF_RenderTextShaded = SDLTTF.get_function[c_TTF_RenderTextShaded]("TTF_RenderTextShaded")
-        self.TTF_RenderTextBlended = SDLTTF.get_function[c_TTF_RenderTextBlended]("TTF_RenderTextBlended")
+        self.TTF_RenderTextSolid = SDLTTF.get_function[c_TTF_RenderTextSolid]("TTF_RenderText_Solid")
+        self.TTF_RenderTextShaded = SDLTTF.get_function[c_TTF_RenderTextShaded]("TTF_RenderText_Shaded")
+        self.TTF_RenderTextBlended = SDLTTF.get_function[c_TTF_RenderTextBlended]("TTF_RenderText_Blended")
 
-        self.TTF_RenderTextUNICODESolid = SDLTTF.get_function[c_TTF_RenderTextUNICODESolid]("TTF_RenderTextUNICODESolid")
-        self.TTF_RenderTextUTF8Solid = SDLTTF.get_function[c_TTF_RenderTextUTF8Solid]("TTF_RenderTextUTF8Solid")
+        self.TTF_RenderTextUNICODESolid = SDLTTF.get_function[c_TTF_RenderTextUNICODESolid]("TTF_RenderUNICODE_Solid")
+        self.TTF_RenderTextUTF8Solid = SDLTTF.get_function[c_TTF_RenderTextUTF8Solid]("TTF_RenderUTF8_Solid")
 
 

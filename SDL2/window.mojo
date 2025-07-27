@@ -9,19 +9,26 @@ struct GUIWin:
     var title: String
     var x: Int32
     var y: Int32
+
     var sdl: SDL
+    var sdl_ttf: SDL_TTF
+    var fonts: Dict[String, UnsafePointer[TTF_Font]]
     fn __init__(out self, name: String, w: Int, h: Int) raises:
         self.x = 1920 // 2
         self.y = 1080 // 2
         self.title = name
         self.renderers = List[UnsafePointer[SDL_Renderer]]()
         self.curr_render_i = 0
+        self.fonts = Dict[String, UnsafePointer[TTF_Font]]()
 
 
         self.sdl = SDL()
+        self.sdl_ttf = SDL_TTF()
         var res_code = self.sdl.Init(SDL_INIT_VIDEO)
         if res_code != 0:
             raise Error("Epic fail")
+        _ = self.sdl_ttf.TTF_Init()
+        self.fonts["default"] = self.sdl_ttf.TTF_OpenFont("boldfont.ttf".unsafe_ptr(), 24)
         self.window = self.sdl.CreateWindow(self.title.unsafe_ptr(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h, SDL_WINDOW_SHOWN) # yay
         self.renderers.append(self.sdl.CreateRenderer(self.window, -1, SDL_RENDERER_ACCELERATED))
     
@@ -60,5 +67,6 @@ struct GUIWin:
         self.sdl.GetCurrentDisplayMode(0, UnsafePointer[SDL_DisplayMode](to=mode))
         return mode
 
-    fn draw_text(self, x: Int32, y: Int32):
-        pass
+    fn draw_text(self, str: String, x: Int32, y: Int32):
+        var surf = self.sdl_ttf.TTF_RenderTextSolid(self.fonts["default"], 24)
+        var tex = self.sdl.CreateTextureFromSurface(self.rendererssurf)
