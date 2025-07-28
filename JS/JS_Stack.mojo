@@ -5,3 +5,6 @@ struct JS_Stack(Copyable, Movable):
     fn __init__(out self):
         self.Variables = Dict[String, JS_Object]
         self.Pool = List[JS_Object]
+
+    fn push(mut self, obj: JS_Object):
+        self.Pool.append(obj)
