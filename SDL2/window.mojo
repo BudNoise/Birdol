@@ -73,7 +73,8 @@ struct GUIWin:
         var spacing = self.sdl_ttf.TTF_FontLineSkip(fnt)
         var curr_y = y
         for line in lines:
-            var surf = self.sdl_ttf.TTF_RenderTextSolid(fnt, line.unsafe_ptr(), SDL_Color(0, 0, 0, 255))
+            var null_terminated = line + "\0"
+            var surf = self.sdl_ttf.TTF_RenderTextSolid(fnt, null_terminated.unsafe_ptr(), SDL_Color(0, 0, 0, 255))
             var tex = self.sdl.CreateTextureFromSurface(self.renderers[self.curr_render_i], surf)
 
             # put the result in the renderer

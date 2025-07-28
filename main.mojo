@@ -18,13 +18,13 @@ fn main() raises:
     testnode.data = {
         "text": 'new super mario bros'
     }
+    HTML.parse_html("e4")
     tab.curr_website.push_node(testnode)
     while run:
         var event: Event = Event()
         while win.sdl.PollEvent(UnsafePointer[Event](to=event)):
             if event.type == SDL_QUIT:
                 run = False
-        win.set_window_title(random_string(5))
         win.update_coords()
         win.set_draw_color(255, 255, 255, 255)
         win.clean_bg()
