@@ -2,6 +2,7 @@
 from SDL2 import *
 import Browser
 import HTML
+import JS
 import random
 fn random_string(length: Int) -> String:
     var chars: String = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -18,6 +19,40 @@ fn main() raises:
     testnode.data = {
         "text": 'new super mario bros'
     }
+    var b = JS.JS_BytecodeFunc()
+    b.push(JS.create_bytecode(
+        0,
+        {
+            "val": "3"
+        }
+    ))
+    b.push(JS.create_bytecode(
+        1,
+        {
+            "val": "+"
+        }
+    ))
+    b.push(JS.create_bytecode(
+        0,
+        {
+            "val": "5"
+        }
+    ))
+    b.push(JS.create_bytecode(
+        2,
+        {
+            "a":"a"
+        }
+    ))
+    b.push(JS.create_bytecode(
+        3,
+        {
+            "name":"a"
+        }
+    ))
+    a = b.call()
+    if a:
+        print(a.value().num)
     HTML.parse_html("e4")
     tab.curr_website.push_node(testnode)
     while run:

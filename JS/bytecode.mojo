@@ -1,14 +1,35 @@
 from .JS_VM import *
+"""
+LOAD_CONST 3
+PUSH_OP +
+LOAD_CONST 5
+LOAD_RESULT
+STORE_VAR jeff
+RET
+"""
+@fieldwise_init
 struct JS_Bytecode(Copyable, Movable):
-    pass
+    var type: Int
+    var operand: Dict[String, String]
+    fn __init__(out self, type: Int):
+        self.type = type
+        self.operand = Dict[String, String]()
+fn create_bytecode(type: Int, operand: Dict[String, String]) -> JS_Bytecode:
+    var bytecode = JS_Bytecode(type)
+    bytecode.operand = operand
+    return bytecode
 struct JS_BytecodeFunc(Copyable, Movable):
     var bytecodes: List[JS_Bytecode]
     fn __init__(out self):
         self.bytecodes = List[JS_Bytecode]()
 
-    fn call(mut self) -> Optional[JS_Object]:
+    fn push(mut self, bytecode: JS_Bytecode):
+        self.bytecodes.append(bytecode)
+
+    fn call(self) raises -> Optional[JS_Object]:
         var new_vm = JS_VM()
         new_vm.main = self.bytecodes
+
         new_vm.run()
         # now we check the last value in stack
         # because the RET bytecode pushes a value in stack

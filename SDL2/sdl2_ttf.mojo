@@ -2,7 +2,7 @@ from memory import UnsafePointer, OpaquePointer
 from sys import ffi, info, simdwidthof
 import .sdl2
 fn get_sdlttf_lib_path() -> String:
-    if info.os_is_linux():
+    if info.CompilationTarget.is_linux():
         var lib_path: String = "/usr/lib/x86_64-linux-gnu/libSDL2_ttf.so"
         try:
             with open("/etc/os-release", "r") as f:
@@ -12,7 +12,7 @@ fn get_sdlttf_lib_path() -> String:
         except:
             print("Can't detect Linux version")
         return lib_path
-    if info.os_is_macos():
+    if info.CompilationTarget.is_macos():
         return "/opt/homebrew/lib/libSDL2_ttf.dylib"
     return ""
 
