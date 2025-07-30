@@ -8,3 +8,14 @@ struct JS_Stack(Copyable, Movable):
 
     fn push(mut self, obj: JS_Object):
         self.Pool.append(obj)
+
+    fn first_const(self) -> JS_Object:
+        return self.Pool[0]
+
+    fn get_const(self, ind: Int) raises -> JS_Object:
+        if ind < 0 or ind >= len(self.Pool):
+            raise "wtf are you trying to do, getting out of bounds buddy?"
+        return self.Pool[ind]
+
+    fn last_const(self) -> JS_Object:
+        return self.Pool[len(self.Pool) - 1]

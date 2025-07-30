@@ -8,6 +8,12 @@ STORE_VAR jeff
 RET
 """
 @fieldwise_init
+struct JS_BytecodeType:
+    alias LOAD_CONST = 0
+    alias PUSH_OP = 1
+    alias STORE_RESULT = 2
+    alias STORE_VAR = 3
+    alias RET = 4
 struct JS_Bytecode(Copyable, Movable):
     var type: Int
     var operand: Dict[String, String]

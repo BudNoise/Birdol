@@ -20,36 +20,14 @@ fn main() raises:
         "text": 'new super mario bros'
     }
     var b = JS.JS_BytecodeFunc()
-    b.push(JS.create_bytecode(
-        0,
-        {
-            "val": "3"
-        }
-    ))
-    b.push(JS.create_bytecode(
-        1,
-        {
-            "val": "+"
-        }
-    ))
-    b.push(JS.create_bytecode(
-        0,
-        {
-            "val": "5"
-        }
-    ))
-    b.push(JS.create_bytecode(
-        2,
-        {
-            "a":"a"
-        }
-    ))
-    b.push(JS.create_bytecode(
-        3,
-        {
-            "name":"a"
-        }
-    ))
+    b.bytecodes = [
+        JS.create_bytecode(0, {"val": "-5"}),
+        JS.create_bytecode(1, {"val": "+"}),
+        JS.create_bytecode(0, {"val": "8"}),
+        JS.create_bytecode(1, {"val": "-"}),
+        JS.create_bytecode(0, {"val": "3"}),
+        JS.create_bytecode(2, {"a": "a"})
+    ]
     a = b.call()
     if a:
         print(a.value().num)
