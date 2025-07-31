@@ -10,6 +10,11 @@ struct JS_Object(Copyable, Movable):
         self.num = num
         self.str = ""
 
+    fn __init__(out self, bool: Bool):
+        self.kind = 0
+        self.num = Float64(bool)
+        self.str = ""
+
     fn __init__(out self, str: String):
         self.kind = 1
         self.str = str

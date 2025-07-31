@@ -35,7 +35,7 @@ struct BinaryExpr(Copyable, Movable):
     
     @staticmethod
     fn operator_equal(val1: JS_Object, val2: JS_Object) -> JS_Object:
-        return JS_Object(Float64(val1.num == val2.num))
+        return JS_Object(val1.num == val2.num)
 
     @staticmethod
     fn get_funcs() -> Dict[String, Self.template]:
@@ -136,7 +136,7 @@ struct JS_VM:
                     var obj = self.stack.Variables[name]
                     var result = Expr.call(obj, JS_Object(Float64(val))).num
                     succeed_blockentering = Bool(result)
-                    if DEBUG and succeed_blockentering:
+                    if succeed_blockentering and DEBUG:
                         print("Block was succesful, can be run now")
                     elif DEBUG:
                         print("Block wasnt successful")
