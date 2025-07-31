@@ -35,7 +35,7 @@ struct BinaryExpr(Copyable, Movable):
     
     @staticmethod
     fn operator_equal(val1: JS_Object, val2: JS_Object) -> JS_Object:
-        return JS_Object(val1.num == val2.num)
+        return JS_Object(Float64(val1.num == val2.num))
 
     @staticmethod
     fn get_funcs() -> Dict[String, Self.template]:
@@ -115,20 +115,20 @@ struct JS_VM:
             elif bytecode.type == JS_BytecodeType.RUN:
                 var data = bytecode.operand
                 var split_block = bytecode.operand["block"].split("_")
-                min_block = int(split_block[0])
-                max_block = int(split_block[2])
+                min_block = Int(split_block[0])
+                max_block = Int(split_block[2])
 
                 var type = bytecode.operand["type"]
                 if type == "IF":
                     var data2 = bytecode.operand["comparison"]
                     var split2 = data2.split(',')
 
-                    # right now it's only if variables
-                    
+                   # right now it's only if variables           
                     var Expr = BinaryExpr("==")
-
-                    var obj = self.stack.Variables[split2[0]]
-
-                    succeed_blockentering = Expr.call(obj, JS_Object(Float64(split2[2]))).num
+                    var name = String(split2[0])
+                    var val = String(split2[2])
+                    var obj = self.stack.Variables[name]
+                    var result = Expr.call(obj, JS_Object(Float64(val))).num
+                    succeed_blockentering = Bool(result)
 
             op_i += 1
