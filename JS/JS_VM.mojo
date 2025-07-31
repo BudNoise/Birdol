@@ -20,6 +20,22 @@ struct BinaryExpr(Copyable, Movable):
     @staticmethod
     fn operator_minus(val1: JS_Object, val2: JS_Object) -> JS_Object:
         return JS_Object(val1.num - val2.num)
+    
+    @staticmethod
+    fn operator_mul(val1: JS_Object, val2: JS_Object) -> JS_Object:
+        return JS_Object(val1.num * val2.num)
+
+    @staticmethod
+    fn operator_div(val1: JS_Object, val2: JS_Object) -> JS_Object:
+        return JS_Object(val1.num / val2.num)
+
+    @staticmethod
+    fn operator_pow(val1: JS_Object, val2: JS_Object) -> JS_Object:
+        return JS_Object(val1.num ** val2.num)
+    
+    @staticmethod
+    fn operator_equal(val1: JS_Object, val2: JS_Object) -> JS_Object:
+        return JS_Object(val1.num == val2.num)
 
     @staticmethod
     fn get_funcs() -> Dict[String, Self.template]:
@@ -27,11 +43,19 @@ struct BinaryExpr(Copyable, Movable):
 
         var expressions = [
             "+",
-            "-"
+            "-",
+            "*",
+            "/",
+            "**",
+            "=="
         ]
         var funcs = [
             Self.operator_plus,
-            Self.operator_minus
+            Self.operator_minus,
+            Self.operator_mul,
+            Self.operator_div,
+            Self.operator_pow,
+            Self.operator_equal
         ]
         for i in range(len(expressions)):
             dct[expressions[i]] = funcs[i]
@@ -52,7 +76,16 @@ struct JS_VM:
     
     fn run(mut self) raises:
         var current_operators = List[BinaryExpr]()
+        var succeed_blockentering = False
+        var min_block, max_block = -1, -1 # main func
+        var op_i = 0
+        fn is_in_block() -> Bool:
+            return op_i >= min_block - 1 and op_i < max_block - 1
         for bytecode in self.main:
+            if is_in_block() and succeed_blockentering:
+                op_i += 1
+                continue
+
             if bytecode.type == JS_BytecodeType.LOAD_CONST: # just learned u could use aliases inside structs for doing fake enums
                 # for now numbers
                 self.stack.push(JS_Object(
@@ -79,3 +112,23 @@ struct JS_VM:
                 self.stack.Variables[bytecode.operand["name"]] = self.stack.Pool[len(self.stack.Pool) - 1]
             elif bytecode.type == JS_BytecodeType.RET: # RET
                 return
+            elif bytecode.type == JS_BytecodeType.RUN:
+                var data = bytecode.operand
+                var split_block = bytecode.operand["block"].split("_")
+                min_block = int(split_block[0])
+                max_block = int(split_block[2])
+
+                var type = bytecode.operand["type"]
+                if type == "IF":
+                    var data2 = bytecode.operand["comparison"]
+                    var split2 = data2.split(',')
+
+                    # right now it's only if variables
+                    
+                    var Expr = BinaryExpr("==")
+
+                    var obj = self.stack.Variables[split2[0]]
+
+                    succeed_blockentering = Expr.call(obj, JS_Object(Float64(split2[2]))).num
+
+            op_i += 1

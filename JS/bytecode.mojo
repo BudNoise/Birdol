@@ -5,6 +5,11 @@ PUSH_OP +
 LOAD_CONST 5
 LOAD_RESULT
 STORE_VAR jeff
+
+RUN 6_TO_8 IF jeff,E,8
+CALL PRINT jeff
+LOAD_CONST 5
+STORE_VAR jeff
 RET
 """
 @fieldwise_init
@@ -14,6 +19,7 @@ struct JS_BytecodeType:
     alias STORE_RESULT = 2
     alias STORE_VAR = 3
     alias RET = 4
+    alias RUN = 5
 struct JS_Bytecode(Copyable, Movable):
     var type: Int
     var operand: Dict[String, String]
