@@ -113,6 +113,8 @@ struct JS_VM:
             elif bytecode.type == JS_BytecodeType.RET: # RET
                 return
             elif bytecode.type == JS_BytecodeType.RUN:
+                if DEBUG:
+                    print("Found block")
                 var data = bytecode.operand
                 var split_block = bytecode.operand["block"].split("_")
                 min_block = Int(split_block[0])
@@ -120,6 +122,8 @@ struct JS_VM:
 
                 var type = bytecode.operand["type"]
                 if type == "IF":
+                    if DEBUG:
+                        print("Block has an IF Statement")
                     var data2 = bytecode.operand["comparison"]
                     var split2 = data2.split(',')
 
@@ -127,8 +131,14 @@ struct JS_VM:
                     var Expr = BinaryExpr("==")
                     var name = String(split2[0])
                     var val = String(split2[2])
+                    if DEBUG:
+                        print("Block has statement", name, Expr.kind, val)
                     var obj = self.stack.Variables[name]
                     var result = Expr.call(obj, JS_Object(Float64(val))).num
                     succeed_blockentering = Bool(result)
+                    if DEBUG and succeed_blockentering:
+                        print("Block was succesful, can be run now")
+                    elif DEBUG:
+                        print("Block wasnt successful")
 
             op_i += 1

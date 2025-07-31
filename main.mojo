@@ -21,12 +21,24 @@ fn main() raises:
     }
     var b = JS.JS_BytecodeFunc()
     b.bytecodes = [
-        JS.create_bytecode(0, {"val": "-5"}),
-        JS.create_bytecode(1, {"val": "+"}),
-        JS.create_bytecode(0, {"val": "8"}),
-        JS.create_bytecode(1, {"val": "-"}),
-        JS.create_bytecode(0, {"val": "3"}),
-        JS.create_bytecode(2, {"a": "a"})
+        JS.create_bytecode(JS.JS_BytecodeType.LOAD_CONST, {"val": "-5"}),
+        JS.create_bytecode(JS.JS_BytecodeType.PUSH_OP, {"val": "+"}),
+        JS.create_bytecode(JS.JS_BytecodeType.LOAD_CONST, {"val": "8"}),
+        JS.create_bytecode(JS.JS_BytecodeType.PUSH_OP, {"val": "-"}),
+        JS.create_bytecode(JS.JS_BytecodeType.LOAD_CONST, {"val": "3"}),
+        JS.create_bytecode(JS.JS_BytecodeType.STORE_RESULT, {"a": "a"}),
+        JS.create_bytecode(JS.JS_BytecodeType.STORE_VAR, {"name": "jeff"}),
+
+        # IF
+
+        JS.create_bytecode(JS.JS_BytecodeType.RUN, {
+            "block": "9_to_10",
+            "type": "IF",
+            "comparison": "jeff,E,0"
+        }),
+
+        JS.create_bytecode(JS.JS_BytecodeType.LOAD_CONST, {"val": "5"}),
+        JS.create_bytecode(JS.JS_BytecodeType.STORE_VAR, {"name": "jeff"}),
     ]
     a = b.call()
     if a:
