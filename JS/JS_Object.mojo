@@ -12,7 +12,7 @@ struct JS_Object(Copyable, Movable):
 
     fn __init__(out self, bool: Bool):
         self.kind = 0
-        self.num = Float64(bool)
+        self.num = Int(bool)
         self.str = ""
 
     fn __init__(out self, str: String):
