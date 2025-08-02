@@ -140,5 +140,7 @@ struct JS_VM:
                         print("Block was succesful, can be run now")
                     elif DEBUG:
                         print("Block wasnt successful")
+                elif type == "ELSE":
+                    succeed_blockentering = not succeed_blockentering
 
             op_i += 1
