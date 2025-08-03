@@ -1,6 +1,6 @@
 from .bytecode import *
 from .JS_Stack import *
-import STD
+from .standardlib import *
 alias DEBUG = True
 @fieldwise_init
 struct BinaryExpr(Copyable, Movable):
@@ -73,11 +73,6 @@ struct BinaryExpr(Copyable, Movable):
             raise "Operator is NOT in the Table"
         return self.funcs[self.kind](val1, val2)
 
-alias STDLibTemplateFN = fn(*args)
-
-alias STDLIB = {
-    "print": STD.native_print
-}
 
 struct JS_VM:
     var funcs: Dict[String, JS_BytecodeFunc]
@@ -112,7 +107,8 @@ struct JS_VM:
             var result: Float64 = Expr.call(obj, JS_Object(Float64(val))).num
 
             return Bool(result)
-        for bytecode in self.main:
+        for i in range(len(self.main)):
+            var bytecode: JS_Bytecode = self.main[i]
             if is_in_block() and not succeed_blockentering: # subtle bug because it will skip the entire body if the statement is true
                 op_i += 1
                 continue
@@ -183,27 +179,38 @@ struct JS_VM:
                 self.stack.push(val)
             elif bytecode.type == JS_BytecodeType.CALL:
                 var funcname = bytecode.operand["name"]
+                if len(bytecode.operand["parent_count"]) == 0:
 
-                if funcname in STDLIB:
-                    # turn all of the string vars into JS_Objects
-                    var count = Int(bytecode.operand["arg_count"])
-                    var arg_list = List[JS_Object]()
-                    for i in range(0, count):
-                        var arg = bytecode.operand["arg_" + String(i)]
-                        if arg in self.stack.Variables:
-                            var val = self.stack.get_var(arg)
-                            arg_list.append(val)
-                        else:
-                            # try to figure out if it's an int
-                            if '"' not in arg:
-                                # it's an int
-                                var val = JS_Object(Float64(arg))
+                    var funcfuncs = STD.get_funcs()
+                    if funcname in funcfuncs:
+                        # turn all of the string vars into JS_Objects
+                        var count = Int(bytecode.operand["arg_count"])
+                        var arg_list = List[JS_Object]()
+                        for i in range(0, count):
+                            var arg = bytecode.operand["arg_" + String(i)]
+                            if arg in self.stack.Variables:
+                                var val: JS_Object = self.stack.get_var(arg)
+                                arg_list.append(val)
                             else:
-                                var val = JS_Object(arg[1:-1]) # first and second-to-last char
+                                var val: JS_Object = JS_Object(0.0)
+                                # try to figure out if it's an int
+                                if '"' not in arg:
+                                    # it's an int
+                                    val = JS_Object(Float64(arg))
+                                else:
+                                    val = JS_Object(arg[1:-1]) # first and second-to-last char
                             
-                            arg_list.append(val)
+                                arg_list.append(val)
 
-                    STDLIB[name](arg_list)
+                        funcfuncs[funcname](arg_list)
+                else:
+                    var count = bytecode.operand["parent_count"]
+                    var previous_parent = self.Stack.Variables # console must be in the variables as a const
+                    for i in range(count):
+                        var p = bytecode.operand[String("parent_{}").format(i)]
+                        if p in previous_parent
+                            previous_parent = previous_parent[p]
+                        
 
                             
                         

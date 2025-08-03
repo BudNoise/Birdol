@@ -8,6 +8,6 @@ fn main() raises:
             break
         var new_vm = JS_Compiler.JS_Compiler.compile(code, scopelist)
         main_vm.main = new_vm.main
-        main_vm.run()
         JS_VM.print_bytecodes(main_vm.main)
+        main_vm.run()
         main_vm.stack.dump()

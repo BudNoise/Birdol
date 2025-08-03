@@ -10,6 +10,8 @@ struct JS_Tokenizer:
         var curr_tok = ""
         var mode = Self.Normal 
         var toks = List[String]()
+
+        var grp_1: List[String] = ["(", ",", ")", ";"]
         for c in str:
             var add_char = True
             if mode == Self.Normal:
@@ -18,7 +20,7 @@ struct JS_Tokenizer:
                     if curr_tok != "":
                         toks.append(curr_tok)
                         curr_tok = ""
-                elif c in ["(", ",", ")", ";"]:
+                elif String(c) in grp_1:
                     add_char = False
                     toks.append(curr_tok)
                     toks.append(String(c))
@@ -60,7 +62,7 @@ struct JS_Compiler:
         var var_name = ""
         var var_tokens = List[String]()
 
-        var Token_Lister = Dict[String, List[String]]()
+        var TokenLister = Dict[String, String]()
 
         fn var_exists(name: String, owned scplist: JS_ScopeList) raises -> Bool:
             scplist.reverse()
@@ -96,6 +98,7 @@ struct JS_Compiler:
 
         var arg_list = 0
         var token_i = 0
+        var parent_list = List[String]()
         for token in result:
             if (token == "var" or token == "let") and state != Self.VarMaker:
                 # start var maker
@@ -105,33 +108,35 @@ struct JS_Compiler:
                 var_name = ""   
             elif (token == "(") and state != Self.FunctionCaller:
                 state = Self.FunctionCaller
-                TokenLister["func_name"] = result[token_i] - 1 # get the very next token 
+                var name = result[token_i - 1]
+                parent_list = name.split(".")[0:-1]
+                TokenLister["func_name"] = name # get the previous token which is the name 
                 var_tokens.clear()
             if state == Self.FunctionCaller:
-                i += 1
-                if i == 2:
-                    TokenLister["func_name"] = token
-                elif token == "(":
-                    var_tokens.clear()
-                elif token != ",":
-                    var_tokens.append(token)
-                    arg_list += 1
-                elif token == ")"
-                    var foodtothebytecodepusher = Dict[String, String]()
-                    foodtothebytecodepusher["arg_count"] = String(arg_list)
-                    foodtothebytecodepusher["name"] = TokenLister["func_name"]
-                    var arg_i = 0
+                if token == ")":
+                    food = {
+                        "arg_count": String(arg_list),
+                        "parent_count": String(len(parent_list))
+                        "name": TokenLister["func_name"]
+                    }
+                    var arg_i, p_i = 0, 0
                     for vtoken in var_tokens:
-                        foodtothebytecodepusher["arg_" + String(arg_i)] = vtoken
+                        food["arg_" + String(arg_i)] = vtoken
                         arg_i += 1
+                    for parent in parent_list
+                        food["parent_" + String(p_i)] = parent
+                        p_i += 1
 
                     pushing_to.push(create_bytecode(
                         JS_BytecodeType.CALL,
-                        foodtothebytecodepusher
+                        food
                     ))
                     TokenLister.clear()
                     var_tokens.clear()
                     state = Self.Default
+                elif token != "," and token != "(":
+                    var_tokens.append(token)
+                    arg_list += 1
             if state == Self.VarMaker:
                 i += 1
                 if i == 2:
@@ -187,5 +192,4 @@ struct JS_Compiler:
                     state = Self.Default
             token_i += 1
         vm.main = pushing_to.bytecodes
-        print_bytecodes(vm.main)
         return vm
