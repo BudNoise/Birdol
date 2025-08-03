@@ -21,6 +21,7 @@ struct JS_BytecodeType:
     alias RET = 4
     alias RUN = 5
     alias LOAD_VAR = 6
+    alias CALL = 7
 struct JS_Bytecode(Copyable, Movable):
     var type: Int
     var operand: Dict[String, String]
@@ -60,7 +61,8 @@ fn print_bytecodes(ls: List[JS_Bytecode]) raises:
         "STORE_VAR",
         "RET",
         "RUN",
-        "LOAD_VAR"
+        "LOAD_VAR",
+        "CALL"
     ]
     for code in ls:
         name: String = names[code.type]

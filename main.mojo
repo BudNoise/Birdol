@@ -40,7 +40,8 @@ fn main() raises:
         JS.create_bytecode(JS.JS_BytecodeType.LOAD_CONST, {"val": "5"}),
         JS.create_bytecode(JS.JS_BytecodeType.STORE_VAR, {"name": "jeff"}),
     ]
-    var jh = JS.JS_Compiler.JS_Compiler.compile("var i = 0;")
+    var scopelist = JS.JS_Compiler.JS_ScopeList()
+    var jh = JS.JS_Compiler.JS_Compiler.compile("var i = 0;", scopelist)
     for bytecode in jh.main:
         print(bytecode.type)
     jh.run()

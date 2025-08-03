@@ -1,5 +1,6 @@
 from .bytecode import *
 from .JS_Stack import *
+import STD
 alias DEBUG = True
 @fieldwise_init
 struct BinaryExpr(Copyable, Movable):
@@ -71,6 +72,13 @@ struct BinaryExpr(Copyable, Movable):
         if self.kind not in self.funcs:
             raise "Operator is NOT in the Table"
         return self.funcs[self.kind](val1, val2)
+
+alias STDLibTemplateFN = fn(*args)
+
+alias STDLIB = {
+    "print": STD.native_print
+}
+
 struct JS_VM:
     var funcs: Dict[String, JS_BytecodeFunc]
     var main: List[JS_Bytecode]
@@ -173,4 +181,30 @@ struct JS_VM:
                 var val = self.stack.get_var(name)
 
                 self.stack.push(val)
+            elif bytecode.type == JS_BytecodeType.CALL:
+                var funcname = bytecode.operand["name"]
+
+                if funcname in STDLIB:
+                    # turn all of the string vars into JS_Objects
+                    var count = Int(bytecode.operand["arg_count"])
+                    var arg_list = List[JS_Object]()
+                    for i in range(0, count):
+                        var arg = bytecode.operand["arg_" + String(i)]
+                        if arg in self.stack.Variables:
+                            var val = self.stack.get_var(arg)
+                            arg_list.append(val)
+                        else:
+                            # try to figure out if it's an int
+                            if '"' not in arg:
+                                # it's an int
+                                var val = JS_Object(Float64(arg))
+                            else:
+                                var val = JS_Object(arg[1:-1]) # first and second-to-last char
+                            
+                            arg_list.append(val)
+
+                    STDLIB[name](arg_list)
+
+                            
+                        
             op_i += 1
