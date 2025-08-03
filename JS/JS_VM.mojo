@@ -3,10 +3,10 @@ from .JS_Stack import *
 alias DEBUG = True
 @fieldwise_init
 struct BinaryExpr(Copyable, Movable):
-    alias template = fn(val1: JS_Object, val2: JS_Object) -> JS_Object
+    alias ExprTemplateFN = fn(val1: JS_Object, val2: JS_Object) -> JS_Object
 
     var kind: String
-    var funcs: Dict[String, Self.template]
+    var funcs: Dict[String, Self.ExprTemplateFN]
 
     fn __init__(out self, kind: String):
         var funcs = Self.get_funcs()
@@ -38,8 +38,12 @@ struct BinaryExpr(Copyable, Movable):
         return JS_Object(val1.num == val2.num)
 
     @staticmethod
-    fn get_funcs() -> Dict[String, Self.template]:
-        var dct = Dict[String, Self.template](power_of_two_initial_capacity=4)
+    fn operator_notequal(val1: JS_Object, val2: JS_Object) -> JS_Object:
+        return JS_Object(val1.num != val2.num)
+
+    @staticmethod
+    fn get_funcs() -> Dict[String, Self.ExprTemplateFN]:
+        var dct = Dict[String, Self.ExprTemplateFN](power_of_two_initial_capacity=4)
 
         var expressions = [
             "+",
@@ -47,7 +51,8 @@ struct BinaryExpr(Copyable, Movable):
             "*",
             "/",
             "**",
-            "=="
+            "==",
+            "!="
         ]
         var funcs = [
             Self.operator_plus,
@@ -55,7 +60,8 @@ struct BinaryExpr(Copyable, Movable):
             Self.operator_mul,
             Self.operator_div,
             Self.operator_pow,
-            Self.operator_equal
+            Self.operator_equal,
+            Self.operator_notequal
         ]
         for i in range(len(expressions)):
             dct[expressions[i]] = funcs[i]
@@ -79,8 +85,9 @@ struct JS_VM:
         var succeed_blockentering = False
         var min_block, max_block = -1, -1 # main func
         var op_i = 0
+        var was_in_block = False
         fn is_in_block() -> Bool:
-            return op_i >= min_block - 1 and op_i < max_block - 1
+            return op_i >= min_block and op_i < max_block
         for bytecode in self.main:
             if is_in_block() and succeed_blockentering:
                 op_i += 1
@@ -113,6 +120,7 @@ struct JS_VM:
             elif bytecode.type == JS_BytecodeType.RET: # RET
                 return
             elif bytecode.type == JS_BytecodeType.RUN:
+                was_in_block = True
                 if DEBUG:
                     print("Found block")
                 var data = bytecode.operand
@@ -128,7 +136,7 @@ struct JS_VM:
                     var split2 = data2.split(',')
 
                    # right now it's only if variables           
-                    var Expr = BinaryExpr("==")
+                    var Expr = BinaryExpr(String(split[1]))
                     var name = String(split2[0])
                     var val = String(split2[2])
                     if DEBUG:
@@ -141,6 +149,6 @@ struct JS_VM:
                     elif DEBUG:
                         print("Block wasnt successful")
                 elif type == "ELSE":
-                    succeed_blockentering = not succeed_blockentering
+                    succeed_blockentering = not succeed_blockentering and was_in_block
 
             op_i += 1
