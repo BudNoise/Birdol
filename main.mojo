@@ -40,6 +40,11 @@ fn main() raises:
         JS.create_bytecode(JS.JS_BytecodeType.LOAD_CONST, {"val": "5"}),
         JS.create_bytecode(JS.JS_BytecodeType.STORE_VAR, {"name": "jeff"}),
     ]
+    var jh = JS.JS_Compiler.JS_Compiler.compile("var i = 0;")
+    for bytecode in jh.main:
+        print(bytecode.type)
+    jh.run()
+    print(len(jh.stack.Variables))
     a = b.call()
     if a:
         print(a.value().num)

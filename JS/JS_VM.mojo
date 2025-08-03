@@ -79,6 +79,10 @@ struct JS_VM:
         self.funcs = Dict[String, JS_BytecodeFunc]()
         self.main = List[JS_Bytecode]()
         self.stack = JS_Stack()
+    fn __copyinit__(out self, e: Self):
+        self.funcs = e.funcs
+        self.main = e.main
+        self.stack = e.stack
     
     fn run(mut self) raises:
         var current_operators = List[BinaryExpr]()
@@ -112,11 +116,12 @@ struct JS_VM:
                         print('Doing arithmetic "', current_val.num, operator.kind, next_val.num, "=", res.num, '"')
                     current_val = res
                     i += 1
-                self.stack.Pool.clear() # Clear The Pool!
                 self.stack.push(current_val)
                 current_operators.clear()
             elif bytecode.type == JS_BytecodeType.STORE_VAR: # STORE_VAR
-                self.stack.Variables[bytecode.operand["name"]] = self.stack.Pool[len(self.stack.Pool) - 1]
+                var val = self.stack.last_const()
+                self.stack.Variables[bytecode.operand["name"]] = val
+                self.stack.Pool.clear()
             elif bytecode.type == JS_BytecodeType.RET: # RET
                 return
             elif bytecode.type == JS_BytecodeType.RUN:

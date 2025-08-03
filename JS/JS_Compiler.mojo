@@ -9,20 +9,23 @@ struct JS_Tokenizer:
         var curr_tok = ""
         var mode = Self.Normal 
         var toks = List[String]()
-        fn add_tok():
-            if curr_tok != "":
-                toks.append(curr_tok)
-                curr_tok = ""
         for c in str:
             var add_char = True
             if mode == Self.Normal:
-                if c == " " or c == ";":
+                if c == " ":
                     add_char = False
-                    add_tok()
+                    if curr_tok != "":
+                        toks.append(curr_tok)
+                        curr_tok = ""
+                elif c == ";":
+                    add_char = False
+                    toks.append(curr_tok)
+                    toks.append(String(c))
+                    curr_tok = ""
             if add_char:
                 curr_tok += c
         if curr_tok != "":
-            add_tok()
+            toks.append(curr_tok)
         return toks
 
 
@@ -37,9 +40,10 @@ struct JS_Compiler:
         pass
     
     @staticmethod
-    fn compile(str: String) -> JS_VM:
+    fn compile(str: String) raises -> JS_VM:
         fn token_is_not_operator(token: String) -> Bool:
             return token not in BinaryExpr.get_funcs()
+        var vm = JS_VM()
         var pushing_to = JS_BytecodeFunc()
         var result = JS_Tokenizer.tokenize(str)
 
@@ -54,9 +58,9 @@ struct JS_Compiler:
                 state = Self.VarMaker    
             if state == Self.VarMaker:
                 i += 1
-                if i == 1:
+                if i == 2:
                     var_name = token
-                elif i > 1 and token != ";":
+                elif i >= 4 and token != ";": # SKIP THE =
                     var_tokens.append(token)
 
                 if token == ";":
@@ -95,3 +99,5 @@ struct JS_Compiler:
                     var_tokens = []
                     var_name = ""
                     i = 0
+        vm.main = pushing_to.bytecodes
+        return vm

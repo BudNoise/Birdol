@@ -51,3 +51,20 @@ struct JS_BytecodeFunc(Copyable, Movable):
             result = Optional[JS_Object](new_vm.stack.Pool.pop()) # pop the stack and put it to an optional
 
         return result
+fn print_bytecodes(ls: List[JS_Bytecode]) raises:
+    var names = [
+        "LOAD_CONST",
+        "PUSH_OP",
+        "STORE_RESULT",
+        "STORE_VAR",
+        "RET",
+        "RUN"
+    ]
+    for code in ls:
+        name: String = names[code.type]
+        var output: String = name
+
+        for operando in code.operand:
+            output += String(" {}: {}").format(operando, code.operand[operando])
+        
+        print(output)

@@ -6,6 +6,13 @@ struct JS_Stack(Copyable, Movable):
         self.Variables = Dict[String, JS_Object]()
         self.Pool = List[JS_Object]()
 
+    fn dump(self) raises:
+        print("Constants in the Stack Pool:")
+        for obj in self.Pool:
+            print("  Object with value:", obj.num)
+        print("Variables in the Stack:")
+        for obj2 in self.Variables:
+            print("  Object with name", obj2, "with value", self.Variables[obj2].num)
     fn push(mut self, obj: JS_Object):
         self.Pool.append(obj)
 
