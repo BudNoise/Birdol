@@ -34,7 +34,7 @@ fn main() raises:
         JS.create_bytecode(JS.JS_BytecodeType.RUN, {
             "block": "9_to_10",
             "type": "IF",
-            "comparison": "jeff,E,0"
+            "comparison": "jeff,==,0"
         }),
 
         JS.create_bytecode(JS.JS_BytecodeType.LOAD_CONST, {"val": "5"}),

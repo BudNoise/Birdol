@@ -136,7 +136,7 @@ struct JS_VM:
                     var split2 = data2.split(',')
 
                    # right now it's only if variables           
-                    var Expr = BinaryExpr(String(split[1]))
+                    var Expr = BinaryExpr(String(split2[1]))
                     var name = String(split2[0])
                     var val = String(split2[2])
                     if DEBUG:
@@ -149,6 +149,6 @@ struct JS_VM:
                     elif DEBUG:
                         print("Block wasnt successful")
                 elif type == "ELSE":
-                    succeed_blockentering = not succeed_blockentering and was_in_block
-
+                    succeed_blockentering = (not succeed_blockentering) and was_in_block
+                    # was in block is a saveguard so you DONT write elses without parentes like ifs
             op_i += 1
