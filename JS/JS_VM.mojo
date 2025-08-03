@@ -92,8 +92,20 @@ struct JS_VM:
         var was_in_block = False
         fn is_in_block() -> Bool:
             return op_i >= min_block and op_i < max_block
+        fn if_can_run(comparison: String) raises -> Bool:
+            var split2 = comparison.split(',')
+            # right now it's only if variables           
+            var Expr = BinaryExpr(String(split2[1]))
+            var name = String(split2[0])
+            var val = String(split2[2])
+            var obj = self.stack.Variables[name]
+            if DEBUG:
+                print("Block has statement", name, Expr.kind, val)
+            var result: Float64 = Expr.call(obj, JS_Object(Float64(val))).num
+
+            return Bool(result)
         for bytecode in self.main:
-            if is_in_block() and succeed_blockentering:
+            if is_in_block() and not succeed_blockentering: # subtle bug because it will skip the entire body if the statement is true
                 op_i += 1
                 continue
 
@@ -138,22 +150,27 @@ struct JS_VM:
                     if DEBUG:
                         print("Block has an IF Statement")
                     var data2 = bytecode.operand["comparison"]
-                    var split2 = data2.split(',')
-
-                   # right now it's only if variables           
-                    var Expr = BinaryExpr(String(split2[1]))
-                    var name = String(split2[0])
-                    var val = String(split2[2])
-                    if DEBUG:
-                        print("Block has statement", name, Expr.kind, val)
-                    var obj = self.stack.Variables[name]
-                    var result = Expr.call(obj, JS_Object(Float64(val))).num
-                    succeed_blockentering = Bool(result)
+                    succeed_blockentering = if_can_run(data2)
                     if succeed_blockentering and DEBUG:
                         print("Block was succesful, can be run now")
                     elif DEBUG:
                         print("Block wasnt successful")
                 elif type == "ELSE":
+                    print("Block has an Else Statement")
                     succeed_blockentering = (not succeed_blockentering) and was_in_block
                     # was in block is a saveguard so you DONT write elses without parentes like ifs
+                elif type == "ELIF":
+                    var data2 = bytecode.operand["comparison"]
+                    if DEBUG:
+                        print("Block has an Else If Statement")
+                    succeed_blockentering = (not succeed_blockentering) and if_can_run(data2)
+                    if succeed_blockentering and DEBUG:
+                        print("Block was succesful, can be run now")
+                    elif DEBUG:
+                        print("Block wasnt successful")
+            elif bytecode.type == JS_BytecodeType.LOAD_VAR:
+                var name = bytecode.operand["val"]
+                var val = self.stack.get_var(name)
+
+                self.stack.push(val)
             op_i += 1

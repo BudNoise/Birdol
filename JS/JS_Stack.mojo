@@ -19,6 +19,10 @@ struct JS_Stack(Copyable, Movable):
     fn first_const(self) -> JS_Object:
         return self.Pool[0]
 
+    fn get_var(self, name: String) raises -> JS_Object:
+        if name not in self.Variables:
+            raise "Trying to access a Variable that doesn't exist."
+        return self.Variables[name]
     fn get_const(self, ind: Int) raises -> JS_Object:
         if ind < 0 or ind >= len(self.Pool):
             raise "wtf are you trying to do, getting out of bounds buddy?"

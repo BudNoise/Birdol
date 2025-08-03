@@ -1,4 +1,5 @@
 from .JS_VM import *
+from .bytecode import *
 
 struct JS_Tokenizer:
     alias Normal = 0
@@ -28,10 +29,8 @@ struct JS_Tokenizer:
             toks.append(curr_tok)
         return toks
 
-
-            
-
-
+alias JS_Scope = Dict[String, Bool]
+alias JS_ScopeList = List[JS_Scope]
 
 struct JS_Compiler:
     alias Default = 0
@@ -40,7 +39,10 @@ struct JS_Compiler:
         pass
     
     @staticmethod
-    fn compile(str: String) raises -> JS_VM:
+    fn compile(str: String, mut scopelist: JS_ScopeList) raises -> JS_VM:
+        if not scopelist:
+            var imdead = JS_Scope()
+            scopelist.append(imdead)
         fn token_is_not_operator(token: String) -> Bool:
             return token not in BinaryExpr.get_funcs()
         var vm = JS_VM()
@@ -51,6 +53,15 @@ struct JS_Compiler:
         var i = 0
         var var_name = ""
         var var_tokens = List[String]()
+
+        fn var_exists(name: String) raises -> Bool:
+            var copyscopes = scopelist
+            copyscopes.reverse()
+            for scope in copyscopes:
+                if name in scope:
+                    return scope[name]
+            return False
+        var ExistingVariables = List[String]()
 
         for token in result:
             if (token == "var" or token == "let") and state != Self.VarMaker:
@@ -66,13 +77,21 @@ struct JS_Compiler:
                 if token == ";":
                     # make the bytecode for it
                     for vtoken in var_tokens:
-                        if token_is_not_operator(vtoken):
-                            pushing_to.push(create_bytecode(
-                                JS_BytecodeType.LOAD_CONST,
-                                {
-                                    "val": vtoken
-                                }
-                            ))
+                        if token_is_not_operator(vtoken):        
+                            if var_exists(vtoken):
+                                pushing_to.push(create_bytecode(
+                                    JS_BytecodeType.LOAD_VAR,
+                                    {
+                                        "val": vtoken
+                                    }
+                                ))
+                            else:
+                                pushing_to.push(create_bytecode(
+                                    JS_BytecodeType.LOAD_CONST,
+                                    {
+                                        "val": vtoken
+                                    }
+                                ))
                         else:
                             pushing_to.push(
                                 create_bytecode(
@@ -95,6 +114,8 @@ struct JS_Compiler:
                             "name": var_name
                         }
                     ))
+
+                    scopelist[0][var_name] = True
 
                     var_tokens = []
                     var_name = ""
