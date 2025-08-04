@@ -80,6 +80,9 @@ struct JS_Compiler:
             return token not in BinaryExpr.get_funcs()
         var vm = JS_VM()
         var pushing_to = JS_BytecodeFunc()
+        var pushing_to_scopelist = List[JS_BytecodeFunc]()
+        pushing_to_scopelist.append(JS_BytecodeFunc())
+        var pushing_to_i = 0
         var result = JS_Tokenizer.tokenize(str)
 
         var state = Self.Default
@@ -95,6 +98,15 @@ struct JS_Compiler:
                 if name in scope:
                     return True
             return False
+
+        fn add_new_depth(mut pushing_to_scopelist: List[JS_BytecodeFunc], mut pushing_to_i: Int):
+            pushing_to_scopelist.append(JS_BytecodeFunc())
+            pushing_to_i = len(pushing_to_scopelist) - 1
+
+        fn push_to_currdepth(mut pushing_to_scopelist: List[JS_BytecodeFunc], bytecode: JS_Bytecode):
+            pushing_to_scopelist[pushing_to_i].push(
+                bytecode
+            )
 
 
         fn infix_to_postfix(tokens: List[String]) -> List[String]:
@@ -123,6 +135,9 @@ struct JS_Compiler:
 
         var started_ARGS = False
         var function_ARGS = List[String]() # to translate like my_arg into __funcarg_0__ because its the first argument 
+        var on_Function = False
+        var Functions = Dict[String, JS_BytecodeFunc]()
+        var CURRFUNCNAME = ""
         var arg_list = 0
         var token_i = 0
         var parent_list = List[String]()
@@ -138,6 +153,7 @@ struct JS_Compiler:
                 arg_list = 0
                 var_tokens.clear()
                 var name = result[token_i + 1] # function, name, (
+                CURRFUNCNAME = name
             elif (token == "(") and state != Self.FunctionCaller and state != Self.FunctionMaker:
                 state = Self.FunctionCaller
                 arg_list = 0
@@ -148,16 +164,28 @@ struct JS_Compiler:
                 parent_list = parent_list[0:-1]
                 TokenLister["func_name"] = String(unc[-1]) # get the previous token which is the name 
                 var_tokens.clear()
-            if state == Self.FunctionMaker:
+            if state == Self.Default:
+                if token == "{" and on_Function:
+                    add_new_depth(pushing_to_scopelist, pushing_to_i)
+                elif token == "}":
+                    on_Function = False
+
+                    Functions[CURRFUNCNAME] = pushing_to_scopelist[pushing_to_i]
+                    _ = pushing_to_scopelist.pop()
+                    pushing_to_i -= 1
+            elif state == Self.FunctionMaker:
+                var the_novartokens: List[String] = [",", ")", "{", "}"]
                 if token == "(":
                     started_ARGS = True
-                elif token != "," and token != ")" and token != "{", "}":
+                elif token != "," and token != ")" and token not in the_novartokens:
                     var_tokens.append(token)
                 elif token == ")":
                     function_ARGS = var_tokens
                     # TODO: add a pushing_to list like if it was a depth, where 0 is
                     # the main func and 1 may be this function or even more if it's inside something else
-                    
+                    var_tokens.clear()                
+                    on_Function = True
+                    state = Self.Default
             elif state == Self.FunctionCaller:
                 if token == ")":
                     food = {
@@ -173,7 +201,7 @@ struct JS_Compiler:
                         food["parent_" + String(p_i)] = parent
                         p_i += 1
 
-                    pushing_to.push(create_bytecode(
+                    push_to_currdepth( pushing_to_scopelist, create_bytecode(
                         JS_BytecodeType.CALL,
                         food
                     ))
@@ -196,21 +224,21 @@ struct JS_Compiler:
                         if token_is_not_operator(vtoken):  
                             var result = var_exists(String(vtoken), scopelist)      
                             if result:
-                                pushing_to.push(create_bytecode(
+                                push_to_currdepth( pushing_to_scopelist, create_bytecode(
                                     JS_BytecodeType.LOAD_VAR,
                                     {
                                         "val": vtoken
                                     }
                                 ))
                             else:
-                                pushing_to.push(create_bytecode(
+                                push_to_currdepth( pushing_to_scopelist, create_bytecode(
                                     JS_BytecodeType.LOAD_CONST,
                                     {
                                         "val": vtoken
                                     }
                                 ))
                         else:
-                            pushing_to.push(
+                            push_to_currdepth( pushing_to_scopelist,
                                 create_bytecode(
                                     JS_BytecodeType.PUSH_OP,
                                     {
@@ -218,14 +246,14 @@ struct JS_Compiler:
                                     }
                                 )
                             )
-                    pushing_to.push(create_bytecode(
+                    push_to_currdepth( pushing_to_scopelist, create_bytecode(
                         JS_BytecodeType.STORE_RESULT,
                         {
                             "a":""
                         }
                     ))
 
-                    pushing_to.push(create_bytecode(
+                    push_to_currdepth( pushing_to_scopelist, create_bytecode(
                         JS_BytecodeType.STORE_VAR,
                         {
                             "name": var_name
@@ -238,5 +266,7 @@ struct JS_Compiler:
                     i = 0
                     state = Self.Default
             token_i += 1
-        vm.main = pushing_to.bytecodes
+        vm.main = pushing_to_scopelist[0].bytecodes
+        for name in Functions:
+            vm.stack.Variables[name] = JS_Object(Functions[name])
         return vm
