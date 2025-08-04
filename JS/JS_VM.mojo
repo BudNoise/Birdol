@@ -2,6 +2,7 @@ from .bytecode import *
 from .JS_Stack import *
 from .JS_Compiler import *
 from .standardlib import *
+from time import *
 alias DEBUG = False
 alias MAX_FUNC_ARGS = 255
 @fieldwise_init
@@ -117,6 +118,7 @@ struct JS_VM:
     fn run(mut self, args: List[JS_Object] = []) raises:
         if DEBUG:
             print("Starting VM")
+        var start = time.perf_counter_ns()
         for i in range(len(args)):
             var n = "__funcarg_" + String(i) + "__"
             if DEBUG:
@@ -314,3 +316,5 @@ struct JS_VM:
                             
                         
             op_i += 1
+        var end = time.perf_counter_ns()
+        print((end - start) / 1_000_000_000, "seconds")
