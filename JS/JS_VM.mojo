@@ -2,7 +2,8 @@ from .bytecode import *
 from .JS_Stack import *
 from .JS_Compiler import *
 from .standardlib import *
-alias DEBUG = True
+alias DEBUG = False
+alias MAX_FUNC_ARGS = 255
 @fieldwise_init
 struct BinaryExpr(Copyable, Movable):
     alias ExprTemplateFN = fn(val1: JS_Object, val2: JS_Object) -> JS_Object
@@ -83,17 +84,30 @@ struct JS_VM:
         self.funcs = Dict[String, JS_BytecodeFunc]()
         self.main = List[JS_Bytecode]()
         self.stack = JS_Stack()
-        var bytecode_list = List[JS_Bytecode]()
-        bytecode_list.append(create_bytecode(JS_BytecodeType.CALL, {
+        bytecode_LOG = [create_bytecode(JS_BytecodeType.CALL, {
             "parent_count": "0",
             "arg_count": "-1",
-            "name": "__STD_PRINT__",
-        }))
+            "name": "__STD_PRINT_LOG__",
+        })]
+        bytecode_WARN = [create_bytecode(JS_BytecodeType.CALL, {
+            "parent_count": "0",
+            "arg_count": "-1",
+            "name": "__STD_PRINT_WARN__",
+        })]
+        bytecode_ERROR = [create_bytecode(JS_BytecodeType.CALL, {
+            "parent_count": "0",
+            "arg_count": "-1",
+            "name": "__STD_PRINT_ERROR__",
+        })]
 
-        var bfunc = JS_BytecodeFunc()
-        bfunc.bytecodes = bytecode_list
+        var bfunc, bfunc2, bfunc3 = JS_BytecodeFunc(), JS_BytecodeFunc(), JS_BytecodeFunc()
+        bfunc.bytecodes = bytecode_LOG
+        bfunc2.bytecodes = bytecode_WARN
+        bfunc3.bytecodes = bytecode_ERROR
         self.stack.Variables["console"] = JS_Object({
-            "log": JS_Object(bfunc)
+            "log": JS_Object(bfunc),
+            "warn": JS_Object(bfunc2),
+            "error": JS_Object(bfunc3)
         })
     fn __copyinit__(out self, e: Self):
         self.funcs = e.funcs
@@ -101,10 +115,12 @@ struct JS_VM:
         self.stack = e.stack
     
     fn run(mut self, args: List[JS_Object] = []) raises:
-        print("Starting VM")
+        if DEBUG:
+            print("Starting VM")
         for i in range(len(args)):
             var n = "__funcarg_" + String(i) + "__"
-            print("argumentous", n)
+            if DEBUG:
+                print("argumentous", n)
             self.stack.Variables[n] = args[i] # __funcarg_0__
 
         fn get_arg(i: Int) raises -> JS_Object:
@@ -206,7 +222,8 @@ struct JS_VM:
 
                 self.stack.push(val)
             elif bytecode.type == JS_BytecodeType.CALL:
-                print("le_calleephone")
+                if DEBUG:
+                    print("le_calleephone")
                 var funcname = bytecode.operand["name"]
                 if Int(bytecode.operand["parent_count"]) == 0:
 
@@ -232,14 +249,15 @@ struct JS_VM:
                                 arg_list.append(val)
 
                         if count == -1:
-                            for i in range(0, 255):
+                            for i in range(0, MAX_FUNC_ARGS):
                                 if DEBUG:
                                     print("Unc STILL got IT!")
                                 var arg = String("__funcarg_{}__").format(i) # __funcarg_0__
                                 if arg not in self.stack.Variables:
                                     break # we have passed all the args
                                 arg_list.append(get_arg(i))
-                                print(get_arg(i).num)
+                                if DEBUG:
+                                    print(get_arg(i).num)
 
                         funcfuncs[funcname](arg_list)
                 else:
