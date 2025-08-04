@@ -11,7 +11,7 @@ struct JS_Tokenizer:
         var mode = Self.Normal 
         var toks = List[String]()
 
-        var grp_1: List[String] = ["(", ",", ")", ";"]
+        var grp_1: List[String] = ["(", ",", ")", ";", "+", "-", "*", "/", "**", "{", "}"]
         for c in str:
             var add_char = True
             if mode == Self.Normal:
@@ -43,6 +43,7 @@ struct JS_Compiler:
     alias Default = 0
     alias VarMaker = 1
     alias FunctionCaller = 2
+    alias FunctionMaker = 3
     fn __init__(out self):
         pass
 
@@ -120,6 +121,8 @@ struct JS_Compiler:
 
             return out
 
+        var started_ARGS = False
+        var function_ARGS = List[String]() # to translate like my_arg into __funcarg_0__ because its the first argument 
         var arg_list = 0
         var token_i = 0
         var parent_list = List[String]()
@@ -130,7 +133,12 @@ struct JS_Compiler:
                 i = 0
                 var_tokens.clear()
                 var_name = ""   
-            elif (token == "(") and state != Self.FunctionCaller:
+            elif (token == "function") and state != Self.FunctionMaker:
+                state = Self.FunctionMaker
+                arg_list = 0
+                var_tokens.clear()
+                var name = result[token_i + 1] # function, name, (
+            elif (token == "(") and state != Self.FunctionCaller and state != Self.FunctionMaker:
                 state = Self.FunctionCaller
                 arg_list = 0
                 var name = result[token_i - 1]
@@ -140,7 +148,17 @@ struct JS_Compiler:
                 parent_list = parent_list[0:-1]
                 TokenLister["func_name"] = String(unc[-1]) # get the previous token which is the name 
                 var_tokens.clear()
-            if state == Self.FunctionCaller:
+            if state == Self.FunctionMaker:
+                if token == "(":
+                    started_ARGS = True
+                elif token != "," and token != ")" and token != "{", "}":
+                    var_tokens.append(token)
+                elif token == ")":
+                    function_ARGS = var_tokens
+                    # TODO: add a pushing_to list like if it was a depth, where 0 is
+                    # the main func and 1 may be this function or even more if it's inside something else
+                    
+            elif state == Self.FunctionCaller:
                 if token == ")":
                     food = {
                         "arg_count": String(arg_list),

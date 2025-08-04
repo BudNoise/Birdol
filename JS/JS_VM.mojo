@@ -137,10 +137,16 @@ struct JS_VM:
         var current_operators = List[BinaryExpr]()
         var succeed_blockentering = False
         var min_block, max_block = -1, -1 # main func
+        var blockdepths = List[Dict[String, Int]]()
+        var curr_depth = 0
+        blockdepths.append({
+            "min_block": -1,
+            "max_block": -1
+        })
         var op_i = 0
         var was_in_block = False
-        fn is_in_block() -> Bool:
-            return op_i >= min_block and op_i < max_block
+        def is_in_block(depth: Int) -> Bool:
+            return op_i >= blockdepths[depth]["min_block"] and op_i < blockdepths[depth]["max_block"]
         fn if_can_run(comparison: String) raises -> Bool:
             var split2 = comparison.split(',')
             # right now it's only if variables           
@@ -155,9 +161,10 @@ struct JS_VM:
             return Bool(result)
         for i in range(len(self.main)):
             var bytecode: JS_Bytecode = self.main[i]
-            if is_in_block() and not succeed_blockentering: # subtle bug because it will skip the entire body if the statement is true
-                op_i += 1
-                continue
+            if is_in_block(curr_depth) and not succeed_blockentering: # subtle bug because it will skip the entire body if the statement is true
+                op_i = blockdepths[curr_depth]["max_block"]
+                i = op_i
+                curr_depth -= 1
 
             if bytecode.type == JS_BytecodeType.LOAD_CONST: # just learned u could use aliases inside structs for doing fake enums
                 # for now numbers
@@ -201,6 +208,7 @@ struct JS_VM:
                         print("Block has an IF Statement")
                     var data2 = bytecode.operand["comparison"]
                     succeed_blockentering = if_can_run(data2)
+                    curr_depth += Int(succeed_blockentering)
                     if succeed_blockentering and DEBUG:
                         print("Block was succesful, can be run now")
                     elif DEBUG:
@@ -208,12 +216,14 @@ struct JS_VM:
                 elif type == "ELSE":
                     print("Block has an Else Statement")
                     succeed_blockentering = (not succeed_blockentering) and was_in_block
+                    curr_depth += Int(succeed_blockentering)
                     # was in block is a saveguard so you DONT write elses without parentes like ifs
                 elif type == "ELIF":
                     var data2 = bytecode.operand["comparison"]
                     if DEBUG:
                         print("Block has an Else If Statement")
                     succeed_blockentering = (not succeed_blockentering) and if_can_run(data2)
+                    curr_depth += Int(succeed_blockentering)
                     if succeed_blockentering and DEBUG:
                         print("Block was succesful, can be run now")
                     elif DEBUG:
