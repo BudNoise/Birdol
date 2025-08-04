@@ -19,7 +19,7 @@ struct STD:
     fn get_funcs() -> STDLIBType:
         var funcs = STDLIBType()
 
-        funcs["print"] = native_print
+        funcs["__STD_PRINT__"] = native_print
 
         return funcs
 

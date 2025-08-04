@@ -40,11 +40,11 @@ struct JS_BytecodeFunc(Copyable, Movable):
     fn push(mut self, bytecode: JS_Bytecode):
         self.bytecodes.append(bytecode)
 
-    fn call(self) raises -> Optional[JS_Object]:
+    fn call(self, args: List[JS_Object] = List[JS_Object]()) raises -> Optional[JS_Object]:
         var new_vm = JS_VM()
         new_vm.main = self.bytecodes
 
-        new_vm.run()
+        new_vm.run(args)
         # now we check the last value in stack
         # because the RET bytecode pushes a value in stack
         var result = Optional[JS_Object](None)

@@ -1,5 +1,6 @@
 from .bytecode import *
 from .JS_Stack import *
+from .JS_Compiler import *
 from .standardlib import *
 alias DEBUG = True
 @fieldwise_init
@@ -82,12 +83,39 @@ struct JS_VM:
         self.funcs = Dict[String, JS_BytecodeFunc]()
         self.main = List[JS_Bytecode]()
         self.stack = JS_Stack()
+        var bytecode_list = List[JS_Bytecode]()
+        bytecode_list.append(create_bytecode(JS_BytecodeType.CALL, {
+            "parent_count": "0",
+            "arg_count": "-1",
+            "name": "__STD_PRINT__",
+        }))
+
+        var bfunc = JS_BytecodeFunc()
+        bfunc.bytecodes = bytecode_list
+        self.stack.Variables["console"] = JS_Object({
+            "log": JS_Object(bfunc)
+        })
     fn __copyinit__(out self, e: Self):
         self.funcs = e.funcs
         self.main = e.main
         self.stack = e.stack
     
-    fn run(mut self) raises:
+    fn run(mut self, args: List[JS_Object] = []) raises:
+        print("Starting VM")
+        for i in range(len(args)):
+            var n = "__funcarg_" + String(i) + "__"
+            print("argumentous", n)
+            self.stack.Variables[n] = args[i] # __funcarg_0__
+
+        fn get_arg(i: Int) raises -> JS_Object:
+            var n = "__funcarg_" + String(i) + "__"
+            if n not in self.stack.Variables:
+                raise "Trying to fetch an argument that doesn't exist"
+            return self.stack.Variables[n]
+
+        var INPUT_ARG_COUNT = len(args)
+
+        
         var current_operators = List[BinaryExpr]()
         var succeed_blockentering = False
         var min_block, max_block = -1, -1 # main func
@@ -178,8 +206,9 @@ struct JS_VM:
 
                 self.stack.push(val)
             elif bytecode.type == JS_BytecodeType.CALL:
+                print("le_calleephone")
                 var funcname = bytecode.operand["name"]
-                if len(bytecode.operand["parent_count"]) == 0:
+                if Int(bytecode.operand["parent_count"]) == 0:
 
                     var funcfuncs = STD.get_funcs()
                     if funcname in funcfuncs:
@@ -202,15 +231,67 @@ struct JS_VM:
                             
                                 arg_list.append(val)
 
+                        if count == -1:
+                            for i in range(0, 255):
+                                if DEBUG:
+                                    print("Unc STILL got IT!")
+                                var arg = String("__funcarg_{}__").format(i) # __funcarg_0__
+                                if arg not in self.stack.Variables:
+                                    break # we have passed all the args
+                                arg_list.append(get_arg(i))
+                                print(get_arg(i).num)
+
                         funcfuncs[funcname](arg_list)
                 else:
-                    var count = bytecode.operand["parent_count"]
-                    var previous_parent = self.Stack.Variables # console must be in the variables as a const
-                    for i in range(count):
+                    var count = Int(bytecode.operand["parent_count"])
+                    var stackington = self.stack.Variables # console must be in the variables as a const
+                    var previous_parent = stackington[bytecode.operand["parent_0"]]
+                    for i in range(1, count):
                         var p = bytecode.operand[String("parent_{}").format(i)]
-                        if p in previous_parent
-                            previous_parent = previous_parent[p]
-                        
+                        if DEBUG:
+                            print(p)
+                        if previous_parent.kind != JS_Object.OBJECT_DICT:
+                            raise "Trying to get a property from a variable that is not a dict."
+                        previous_parent = previous_parent.get_property(p)
+
+                    var arg_count = Int(bytecode.operand["arg_count"])
+                    var arg_list = List[JS_Object]()
+                    if arg_count == -1:
+                        for i in range(0, 255):
+                            var arg = String("__funcarg_{}__").format(i) # __funcarg_0__
+                            if arg not in self.stack.Variables:
+                                break
+                            arg_list.append(get_arg(i))
+                            if DEBUG:
+                                print("unc", get_arg(i).num)
+                    else:
+                        for i in range(arg_count):
+                            var arg = String("arg_{}").format(i)
+                            if arg not in bytecode.operand:
+                                break
+
+                            var name = bytecode.operand[arg]
+                            var val: JS_Object = JS_Object(0.0)
+
+                            if name in self.stack.Variables:
+                                val = self.stack.get_var(name)
+                            else:
+                                val = JS_Object(Float64(name))
+
+                            arg_list.append(val)
+                            if DEBUG:
+                                print("unc dos", name)
+
+                    var unc_still_func = previous_parent.get_property(bytecode.operand["name"])
+
+                    if unc_still_func.kind != JS_Object.OBJECT_FUNC:
+                        raise "Trying to call a variable that is not a function."
+
+                    if unc_still_func.func:
+                        var func = unc_still_func.func.value()
+                        var res = func.call(arg_list)
+                        if res:
+                            pass # TODO: SET IT TO A VARIABLE
 
                             
                         
