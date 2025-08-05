@@ -40,18 +40,21 @@ struct JS_Tokenizer:
 
 alias JS_Scope = Dict[String, Bool]
 alias JS_ScopeList = List[JS_Scope]
-struct JS_Node:
+struct JS_Node(Copyable, Movable):
     alias Define_Variable = 0
     alias Start_Function = 1
     alias End_Function = 2
+    var toks_list: List[String]
     var type: Int
     var data: Dict[String, String]
     fn __init__(out self, type: Int):
         self.type = type
         self.data = Dict[String, String]()
-    fn __init__(out self, type: Int, data: Dict[String, String]):
+        self.toks_list = List[String]()
+    fn __init__(out self, type: Int, data: Dict[String, String], toks_list: List[String]):
         self.type = type
         self.data = data
+        self.toks_list = toks_list
 struct JS_IR:
     var nodes: List[JS_Node]
     fn __init__(out self):
@@ -81,8 +84,8 @@ struct JS_Parser:
                         {
                             "name": UnknownVarName,
                             "immut": "TRUE" if token == "const" else "FALSE",
-                            "value_toks": List[String]()
-                        }
+                        },
+                        List[String]()
                     ))
                     state = Self.VMaker
                     VMaker_VARTOKS.clear()
@@ -90,13 +93,14 @@ struct JS_Parser:
             elif state == Self.VMaker:
                 if not node_being_added:
                     raise "yo why the fuck is node nothing if it's supposed to have something on var maker"
-                if var_name == "":
-                    var_name = token
-                    node_being_added.value().data["name"] = var_name
+                if VMaker_VARNAME == "":
+                    VMaker_VARNAME = token
+                    node_being_added.value().data["name"] = VMaker_VARNAME
+                    node_being_added.value().toks_list = VMaker_VARTOKS
                 elif token == "=":
                     VMaker_WANTSVALUE = True
                 elif token == ";":
-                    ir.push(node_being_added.value)
+                    ir.push(node_being_added.value())
                     node_being_added = Optional[JS_Node](None)
                     state = Self.Def
                     VMaker_WANTSVALUE = False
@@ -114,10 +118,33 @@ struct JS_Codegen:
         for _ in range(255):
             VariableScopeList.append(JS_Scope()) # 255 is max depth in ECMAScript
         var FunctionScopeList = List[JS_BytecodeFunc]() # first is main, a scope it will reset every time a function is ended and be pushed to a funclist
+        FunctionScopeList.append(JS_BytecodeFunc())
         var FuncList = Dict[String, JS_BytecodeFunc]()
         var Current_Depth = 0 # Main Func Depth
 
+        def push_to_depth(mut scopelist: List[JS_BytecodeFunc], depth: Int, bytecode: JS_Bytecode):
+            scopelist[depth].push(bytecode)
+
         for node in ir.nodes:
             if node.type == JS_Node.Define_Variable:
-                var val_toks = node.data.get("value_toks", List[String]())
+                var val_toks = node.toks_list
                 var name = node.data.get("name", "")
+                if len(val_toks) == 1:
+                    var val = val_toks[0]
+                    if val.isdigit():
+                        push_to_depth(FunctionScopeList, Current_Depth,
+                        create_bytecode(
+                            JS_BytecodeType.LOAD_CONST,
+                            {
+                                "val": val
+                            }
+                        ))
+
+                push_to_depth(FunctionScopeList, Current_Depth,
+                    create_bytecode(
+                        JS_BytecodeType.STORE_VAR,
+                        {
+                            "name": name
+                        }
+                ))
+                        
