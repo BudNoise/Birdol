@@ -55,7 +55,7 @@ struct JS_Object(Copyable, Movable):
 
         return self.dict[name]
 
-    fn print_properties(self):
+    def print_properties(self):
         for prop in self.dict:
             print(prop, self.dict[prop].kind)
 

@@ -3,7 +3,7 @@ from .JS_Stack import *
 from .JS_Compiler import *
 from .standardlib import *
 from time import *
-alias DEBUG = False
+alias DEBUG = True
 alias MAX_FUNC_ARGS = 255
 @fieldwise_init
 struct BinaryExpr(Copyable, Movable):
@@ -139,9 +139,10 @@ struct JS_VM:
         var min_block, max_block = -1, -1 # main func
         var blockdepths = List[Dict[String, Int]]()
         var curr_depth = 0
-        blockdepths.append({
+        blockdepths.resize(10, {
             "min_block": -1,
-            "max_block": -1
+            "max_block": -1,
+            "in_while": False
         })
         var op_i = 0
         var was_in_block = False
@@ -161,10 +162,14 @@ struct JS_VM:
             return Bool(result)
         for i in range(len(self.main)):
             var bytecode: JS_Bytecode = self.main[i]
-            if is_in_block(curr_depth) and not succeed_blockentering: # subtle bug because it will skip the entire body if the statement is true
+            if is_in_block(curr_depth) and op_i == blockdepths[curr_depth]["max_block"] and blockdepths[curr_depth]["is_while"]:
+                op_i = blockdepths[curr_depth]["min_block"] - 1
+                i = op_i
+            elif is_in_block(curr_depth) and not succeed_blockentering: # subtle bug because it will skip the entire body if the statement is true
                 op_i = blockdepths[curr_depth]["max_block"]
                 i = op_i
                 curr_depth -= 1
+
 
             if bytecode.type == JS_BytecodeType.LOAD_CONST: # just learned u could use aliases inside structs for doing fake enums
                 # for now numbers
@@ -199,8 +204,8 @@ struct JS_VM:
                     print("Found block")
                 var data = bytecode.operand
                 var split_block = bytecode.operand["block"].split("_")
-                min_block = Int(split_block[0])
-                max_block = Int(split_block[2])
+                blockdepths[curr_depth]["min_block"] = Int(split_block[0])
+                blockdepths[curr_depth]["max_block"] = Int(split_block[2])
 
                 var type = bytecode.operand["type"]
                 if type == "IF":
@@ -224,6 +229,17 @@ struct JS_VM:
                         print("Block has an Else If Statement")
                     succeed_blockentering = (not succeed_blockentering) and if_can_run(data2)
                     curr_depth += Int(succeed_blockentering)
+                    if succeed_blockentering and DEBUG:
+                        print("Block was succesful, can be run now")
+                    elif DEBUG:
+                        print("Block wasnt successful")
+                elif type == "WHILE":
+                    var data2 = bytecode.operand["comparison"]
+                    if DEBUG:
+                        print("Block has an Else If Statement")
+                    succeed_blockentering = if_can_run(data2)
+                    curr_depth += Int(succeed_blockentering)
+                    blockdepths[curr_depth]["is_while"] = succeed_blockentering
                     if succeed_blockentering and DEBUG:
                         print("Block was succesful, can be run now")
                     elif DEBUG:
@@ -297,14 +313,19 @@ struct JS_VM:
                     else:
                         for i in range(arg_count):
                             var arg = String("arg_{}").format(i)
+                            if DEBUG:
+                                print(arg)
                             if arg not in bytecode.operand:
                                 break
-
                             var name = bytecode.operand[arg]
                             var val: JS_Object = JS_Object(0.0)
+                            if DEBUG:
+                                print(name)
 
                             if name in self.stack.Variables:
                                 val = self.stack.get_var(name)
+                                if DEBUG:
+                                    print("it exists")
                             else:
                                 val = JS_Object(Float64(name))
 

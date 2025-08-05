@@ -167,6 +167,27 @@ struct JS_Compiler:
             if state == Self.Default:
                 if token == "{" and on_Function:
                     add_new_depth(pushing_to_scopelist, pushing_to_i)
+                    var ii = 0
+                    for arg in function_ARGS:
+                        if arg == " ":
+                            continue
+                        push_to_currdepth(pushing_to_scopelist, 
+                            create_bytecode(
+                                JS_BytecodeType.LOAD_VAR,
+                                {
+                                    "name": String("__funcarg_{}__").format(ii)
+                                }
+                            )
+                        )
+                        push_to_currdepth(pushing_to_scopelist, 
+                            create_bytecode(
+                                JS_BytecodeType.STORE_VAR,
+                                {
+                                    "name": arg
+                                }
+                            )
+                        ) # this loads the vars got by the vm with the name __funcarg_i__ and sets a new variable with the user made arg name with that variable
+                        ii += 1
                 elif token == "}":
                     on_Function = False
 
@@ -180,7 +201,7 @@ struct JS_Compiler:
                 elif token != "," and token != ")" and token not in the_novartokens:
                     var_tokens.append(token)
                 elif token == ")":
-                    function_ARGS = var_tokens
+                    function_ARGS = var_tokens[2:] # gets everything from index 2 where the args start
                     # TODO: add a pushing_to list like if it was a depth, where 0 is
                     # the main func and 1 may be this function or even more if it's inside something else
                     var_tokens.clear()                

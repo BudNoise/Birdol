@@ -1,4 +1,5 @@
 from .JS_Object import *
+
 fn native_print(objs: List[JS_Object]):
     var output = "Log: "
     for obj in objs:
