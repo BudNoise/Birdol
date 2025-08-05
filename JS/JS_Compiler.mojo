@@ -93,7 +93,7 @@ struct JS_Parser:
             elif state == Self.VMaker:
                 if not node_being_added:
                     raise "yo why the fuck is node nothing if it's supposed to have something on var maker"
-                if VMaker_VARNAME == "":
+                if VMaker_VARNAME == UnknownVarName:
                     VMaker_VARNAME = token
                     node_being_added.value().data["name"] = VMaker_VARNAME
                     node_being_added.value().toks_list = VMaker_VARTOKS
