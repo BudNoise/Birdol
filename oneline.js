@@ -1,0 +1,1 @@
+function fib(i) { var n = i; console.log(n); } fib()

@@ -34,11 +34,6 @@ struct JS_Tokenizer:
 alias JS_Scope = Dict[String, Bool]
 alias JS_ScopeList = List[JS_Scope]
 
-fn print_scopelist(ls: JS_ScopeList) raises:
-    for scope in ls:
-        for name in scope:
-            print(name, scope[name])
-
 struct JS_Compiler:
     alias Default = 0
     alias VarMaker = 1
@@ -75,7 +70,8 @@ struct JS_Compiler:
     fn compile(str: String, mut scopelist: JS_ScopeList) raises -> JS_VM:
         if not scopelist:
             var imdead = JS_Scope()
-            scopelist.append(imdead)
+            for _ in range(10):
+                scopelist.append(imdead)
         fn token_is_not_operator(token: String) -> Bool:
             return token not in BinaryExpr.get_funcs()
         var vm = JS_VM()
@@ -103,8 +99,8 @@ struct JS_Compiler:
             pushing_to_scopelist.append(JS_BytecodeFunc())
             pushing_to_i = len(pushing_to_scopelist) - 1
 
-        fn push_to_currdepth(mut pushing_to_scopelist: List[JS_BytecodeFunc], bytecode: JS_Bytecode):
-            pushing_to_scopelist[pushing_to_i].push(
+        fn push_to_currdepth(mut pushing_to_scopelist: List[JS_BytecodeFunc], i: Int, bytecode: JS_Bytecode):
+            pushing_to_scopelist[i].push(
                 bytecode
             )
 
@@ -171,7 +167,7 @@ struct JS_Compiler:
                     for arg in function_ARGS:
                         if arg == " ":
                             continue
-                        push_to_currdepth(pushing_to_scopelist, 
+                        push_to_currdepth(pushing_to_scopelist, pushing_to_i, 
                             create_bytecode(
                                 JS_BytecodeType.LOAD_VAR,
                                 {
@@ -179,7 +175,7 @@ struct JS_Compiler:
                                 }
                             )
                         )
-                        push_to_currdepth(pushing_to_scopelist, 
+                        push_to_currdepth(pushing_to_scopelist,  pushing_to_i,
                             create_bytecode(
                                 JS_BytecodeType.STORE_VAR,
                                 {
@@ -188,6 +184,7 @@ struct JS_Compiler:
                             )
                         ) # this loads the vars got by the vm with the name __funcarg_i__ and sets a new variable with the user made arg name with that variable
                         ii += 1
+                        scopelist[pushing_to_i][arg] = True
                 elif token == "}":
                     on_Function = False
 
@@ -222,7 +219,7 @@ struct JS_Compiler:
                         food["parent_" + String(p_i)] = parent
                         p_i += 1
 
-                    push_to_currdepth( pushing_to_scopelist, create_bytecode(
+                    push_to_currdepth( pushing_to_scopelist, pushing_to_i, create_bytecode(
                         JS_BytecodeType.CALL,
                         food
                     ))
@@ -233,7 +230,7 @@ struct JS_Compiler:
                 elif token != "," and token != "(":
                     var_tokens.append(token)
                     arg_list += 1
-            if state == Self.VarMaker:
+            elif state == Self.VarMaker:
                 i += 1
                 if i == 2:
                     var_name = token
@@ -245,21 +242,21 @@ struct JS_Compiler:
                         if token_is_not_operator(vtoken):  
                             var result = var_exists(String(vtoken), scopelist)      
                             if result:
-                                push_to_currdepth( pushing_to_scopelist, create_bytecode(
+                                push_to_currdepth( pushing_to_scopelist, pushing_to_i, create_bytecode(
                                     JS_BytecodeType.LOAD_VAR,
                                     {
                                         "val": vtoken
                                     }
                                 ))
                             else:
-                                push_to_currdepth( pushing_to_scopelist, create_bytecode(
+                                push_to_currdepth( pushing_to_scopelist, pushing_to_i, create_bytecode(
                                     JS_BytecodeType.LOAD_CONST,
                                     {
                                         "val": vtoken
                                     }
                                 ))
                         else:
-                            push_to_currdepth( pushing_to_scopelist,
+                            push_to_currdepth( pushing_to_scopelist, pushing_to_i,
                                 create_bytecode(
                                     JS_BytecodeType.PUSH_OP,
                                     {
@@ -267,20 +264,20 @@ struct JS_Compiler:
                                     }
                                 )
                             )
-                    push_to_currdepth( pushing_to_scopelist, create_bytecode(
+                    push_to_currdepth( pushing_to_scopelist, pushing_to_i, create_bytecode(
                         JS_BytecodeType.STORE_RESULT,
                         {
                             "a":""
                         }
                     ))
 
-                    push_to_currdepth( pushing_to_scopelist, create_bytecode(
+                    push_to_currdepth( pushing_to_scopelist, pushing_to_i, create_bytecode(
                         JS_BytecodeType.STORE_VAR,
                         {
                             "name": var_name
                         }
                     ))
-                    scopelist[0][var_name] = True
+                    scopelist[pushing_to_i][var_name] = True
 
                     var_tokens.clear()
                     var_name = ""
@@ -289,5 +286,8 @@ struct JS_Compiler:
             token_i += 1
         vm.main = pushing_to_scopelist[0].bytecodes
         for name in Functions:
+            print("Function Bytecode for", name)
+            print_bytecodes(Functions[name].bytecodes)
+            print("End of Function")
             vm.stack.Variables[name] = JS_Object(Functions[name])
         return vm
