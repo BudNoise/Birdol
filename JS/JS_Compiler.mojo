@@ -107,7 +107,7 @@ struct JS_Parser:
                     VMaker_VARTOKS.clear()
                 elif VMaker_WANTSVALUE:
                     VMaker_VARTOKS.append(token)
-
+        return ir
 
             
 
