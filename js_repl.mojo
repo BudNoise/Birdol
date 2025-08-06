@@ -3,7 +3,7 @@ fn main() raises:
     var main_vm = JS_VM.JS_VM()
     var scopelist = JS_Compiler.JS_ScopeList()
     def compile(code: String):
-        var new_vm = JS_Compiler.JS_Compiler.compile(code, scopelist)
+        var new_vm = JS_Compiler.JS_Compiler.compile(code)
         main_vm.main = new_vm.main
         JS_VM.print_bytecodes(main_vm.main)
         main_vm.run()

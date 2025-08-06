@@ -15,6 +15,8 @@ struct JS_Stack(Copyable, Movable):
             print("  Object with name", obj2, "with value", self.Variables[obj2].num)
     fn push(mut self, obj: JS_Object):
         self.Pool.append(obj)
+    fn pop(mut self) -> JS_Object:
+        return self.Pool.pop()
 
     fn first_const(self) -> JS_Object:
         return self.Pool[0]

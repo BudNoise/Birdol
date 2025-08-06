@@ -180,18 +180,15 @@ struct JS_VM:
                 current_operators.append(
                     BinaryExpr(bytecode.operand["val"])
                 )
-            elif bytecode.type == JS_BytecodeType.STORE_RESULT: # STORE_RESULT
-                var current_val = self.stack.get_const(0)
-                var i = 1
-                for operator in current_operators:
-                    var next_val = self.stack.get_const(i)
-                    var res = operator.call(current_val, next_val)
+            elif bytecode.type == JS_BytecodeType.STORE_RESULT:
+                while current_operators:
+                    var right = self.stack.pop()   # top of stack
+                    var left  = self.stack.pop()   # next
+                    var op = current_operators.pop(0)  # or pop from front
+                    var res = op.call(left, right)
                     if DEBUG:
-                        print('Doing arithmetic "', current_val.num, operator.kind, next_val.num, "=", res.num, '"')
-                    current_val = res
-                    i += 1
-                self.stack.push(current_val)
-                current_operators.clear()
+                        print('Doing arithmetic "', left.num, op.kind, right.num, "=", res.num, '"')
+                    self.stack.push(res)
             elif bytecode.type == JS_BytecodeType.STORE_VAR: # STORE_VAR
                 var val = self.stack.last_const()
                 self.stack.Variables[bytecode.operand["name"]] = val
