@@ -1,11 +1,9 @@
-function fib(i) { var n = i; console.log(n); } fib()
-
 function help() {
-    function inner() {
-        function inner() {
-            return "hey"
-        }
-        print(inner)
+    function helper() {
+        var i = 3;
+        __STD_PRINT__(i)
     }
-    inner()
+    var o = 9;
+    helper()
 }
+help()

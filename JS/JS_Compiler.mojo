@@ -1,14 +1,19 @@
 from .JS_VM import *
 from .bytecode import *
+import random
 
 alias Tokens = List[String]
-
+def print_array[T: Stringable & Movable & Copyable](arr: List[T]):
+    for elem in arr:
+        print(String(elem) + " ")
+    print()
 struct JS_Tokenizer:
     alias Normal = 0
     alias OnString = 1
 
     @staticmethod
     fn tokenize(str: String) raises -> List[String]:
+        print("tokenizer")
         var toks = List[String]()
         var curr_tok = ""
         var mode = Self.Normal
@@ -49,6 +54,8 @@ struct JS_Tokenizer:
         if curr_tok != "":
             toks.append(curr_tok)
 
+        print_array[String](toks)
+
         return toks
 
 
@@ -59,6 +66,7 @@ struct JS_Node(Copyable, Movable):
     alias Define_Variable = 0
     alias Start_Function = 1
     alias End_Function = 2
+    alias Call_Function = 3
     var toks_list: List[String]
     var type: Int
     var data: Dict[String, String]
@@ -86,6 +94,7 @@ struct JS_Parser:
     alias FMaker = 3
     @staticmethod
     def parse(tokens: Tokens) -> JS_IR:
+        print("PARSR")
         var ir = JS_IR()
         var state = Self.Def
         var node_being_added = Optional[JS_Node](None)
@@ -95,8 +104,10 @@ struct JS_Parser:
 
         var FuncMaker_I = 0
         var FuncMaker_NAME = UnknownVarName
-        var on_Func = False
-        for token in tokens:
+        var on_FuncStack = List[Bool]()
+        for i in range(len(tokens)):
+            var token = tokens[i]
+            #print("State:", state, "Token:", token, "on_Func:", on_FuncStack[-1] if on_FuncStack else False, "FuncStackLen:", len(on_FuncStack))
             if state == Self.Def:
                 var varmakergrp: List[String] = ["var", "let", "const"]
                 if token in varmakergrp:
@@ -123,7 +134,17 @@ struct JS_Parser:
                     FuncMaker_NAME = UnknownVarName
 
                     state = Self.FMaker
-                if token == "}" and on_Func:
+                if token == "(" and tokens[i - 2] != "function": # since it's function, name, (, i - 2 will direct to function
+                    node_being_added = Optional[JS_Node](JS_Node(
+                        JS_Node.Call_Function,
+                        {
+                            "name": tokens[i - 1],
+                        },
+                        List[String]()
+                    ))
+                    state = Self.FCaller
+
+                if token == "}" and on_FuncStack[-1]:
                     ir.push(JS_Node(
                         JS_Node.End_Function,
                         {
@@ -131,6 +152,13 @@ struct JS_Parser:
                         },
                         List[String]()
                     ))
+                    _ = on_FuncStack.pop()
+            elif state == Self.FCaller:
+                if token != "," and token != ")":
+                    node_being_added.value().toks_list.append(token)
+                elif token == ")":
+                    ir.push(node_being_added.take())
+                    state = Self.Def
             elif state == Self.FMaker:
                 FuncMaker_I += 1
                 if FuncMaker_I == 1:
@@ -139,9 +167,9 @@ struct JS_Parser:
                 elif token != "(" and token != ")" and token != ",":
                     node_being_added.value().toks_list.append(token)
                 elif token == ")":
-                    ir.push(node_being_added.value())
-                    node_being_added = Optional[JS_Node](None)
-                    on_Func = True
+                    ir.push(node_being_added.take())
+                    on_FuncStack.append(True)
+                    state = Self.Def
             elif state == Self.VMaker:
                 if not node_being_added:
                     raise "yo why the fuck is node nothing if it's supposed to have something on var maker"
@@ -152,8 +180,7 @@ struct JS_Parser:
                     VMaker_WANTSVALUE = True
                 elif token == ";":
                     node_being_added.value().toks_list = VMaker_VARTOKS
-                    ir.push(node_being_added.value())
-                    node_being_added = Optional[JS_Node](None)
+                    ir.push(node_being_added.take())
                     state = Self.Def
                     VMaker_WANTSVALUE = False
                     VMaker_VARTOKS.clear()
@@ -166,7 +193,9 @@ struct JS_Parser:
 struct JS_Codegen:
     @staticmethod
     def generate(ir: JS_IR) -> JS_VM:
+        print("CODEGEN")
         var vm = JS_VM()
+        print("line 1")
         def is_operator(token: String) -> Bool:
             var operators: List[String] = ["+", "-", "/", "*", "**"]
             return token in operators
@@ -204,31 +233,37 @@ struct JS_Codegen:
         FunctionScopeList.append(JS_BytecodeFunc())
         var FunctionNameList = List[String]()
         FunctionNameList.append("main")
+        var CurrFnStack = List[String]()
+        var CurrFnUnMangled = List[String]()
+        var MangledFuncScopes = List[Dict[String, String]]() 
+        for _ in range(32):
+            MangledFuncScopes.append(Dict[String, String]()) 
         var FuncList = Dict[String, JS_BytecodeFunc]()
         var Current_Depth = 0 # Main Func Depth
 
         def push_to_depth(mut scopelist: List[JS_BytecodeFunc], depth: Int, bytecode: JS_Bytecode):
             scopelist[depth].push(bytecode)
         
-        def start_function(mut FunctionScopeList: List[JS_BytecodeFunc], mut i: Int, name: String):
+        def start_function(mut FunctionScopeList: List[JS_BytecodeFunc], name: String):
             FunctionScopeList.append(JS_BytecodeFunc())
             i = len(FunctionScopeList) - 1
+            FunctionScopeList[i].depth = i
             FunctionNameList.append(name)
         
-        def pop_function(mut FunctionScopeList: List[JS_BytecodeFunc], mut i: Int) -> (JS_BytecodeFunc, String):
-            i -= 1
+        def pop_function(mut FunctionScopeList: List[JS_BytecodeFunc]) -> (JS_BytecodeFunc, String):
             return (FunctionScopeList.pop(), FunctionNameList.pop())
 
-        def generate_function_id(parent: String, name: String):
+        def generate_function_id(parent: String, name: String) -> String:
             var random_string = ""
             var keyer = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
             for _ in range(12):
                 var num = random.random_ui64(0, len(keyer) - 1)
                 var letter = keyer[num]
                 random_string += letter
-            return String("Func_{}_{}_{}", parent, name, random_string)
+            return String("Func_{}_{}_{}").format(parent, name, random_string)
 
         for node in ir.nodes:
+            #print("type:", node.type, "depth:", Current_Depth, "mangledfuncscopeslen:", len(MangledFuncScopes))
             if node.type == JS_Node.Define_Variable:
                 var val_toks = node.toks_list
                 var name = node.data.get("name", "")
@@ -278,15 +313,41 @@ struct JS_Codegen:
                 ))
                 VariableScopeList[Current_Depth][name] = True
             elif node.type == JS_Node.Start_Function:
-                start_function(FunctionScopeList, Current_Depth, node.data["name"])
+                Current_Depth += 1
+                start_function(FunctionScopeList, node.data["name"])
+                var id = generate_function_id(CurrFnUnMangled[-1], node.data["name"]) if CurrFnUnMangled else node.data["name"]
+                MangledFuncScopes[Current_Depth][node.data["name"]] = id
+                CurrFnStack.append(id)
+                CurrFnUnMangled.append(node.data["name"])
             elif node.type == JS_Node.End_Function:
-                var popped = pop_function(FunctionScopeList, Current_Depth)
-                FuncList[popped[1]] = popped[0]
+                var popped = pop_function(FunctionScopeList)
+                Current_Depth -= 1
+                var dispatch = MangledFuncScopes[Current_Depth]
+                popped[0].dispatch_table = dispatch
+                popped[0].depth = Current_Depth
+                var func_name = CurrFnStack.pop()
+                print("name:", func_name)
+                var _ = CurrFnUnMangled.pop()
+                FuncList[func_name] = popped[0]
+                MangledFuncScopes[Current_Depth] = Dict[String, String]()
+            elif node.type == JS_Node.Call_Function:
+                push_to_depth(FunctionScopeList, Current_Depth,
+                    create_bytecode(
+                        JS_BytecodeType.CALL,
+                        {
+                            "name": node.data["name"],
+                            "arg_count": "0", # temporal
+                            "parent_count": "0" # also temporal
+                        }
+                    )
+                )
             
         vm.main = FunctionScopeList[0].bytecodes
         for name in FuncList: # TODO: add funcs to FuncList from the Scope. maybe when a node is end function
+            print("Function", name)
             var func = FuncList[name]
-
+            print_bytecodes(func.bytecodes)
+            print("End of Function")
             vm.stack.Variables[name] = JS_Object(func)
         return vm
                         

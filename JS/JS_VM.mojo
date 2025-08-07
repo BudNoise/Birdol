@@ -337,7 +337,7 @@ struct JS_VM:
 
                     if unc_still_func.func:
                         var func = unc_still_func.func.value()
-                        var res = func.call(arg_list)
+                        var res = func.call(self, arg_list)
                         if res:
                             pass # TODO: SET IT TO A VARIABLE
 

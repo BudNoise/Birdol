@@ -34,14 +34,23 @@ fn create_bytecode(type: Int, operand: Dict[String, String]) -> JS_Bytecode:
     return bytecode
 struct JS_BytecodeFunc(Copyable, Movable):
     var bytecodes: List[JS_Bytecode]
+    var depth: Int # the compiletime depth, useful for the codegen, useless for the vm
+    var dispatch_table: Dict[String, String] # ts maps function "inner" to it's actual name from compilation, like c++ mangles every single shit
+    # fuck i hate c++
+    # it is loaded in the stack like that so it's needed to use the nested funcs
     fn __init__(out self):
         self.bytecodes = List[JS_Bytecode]()
+        self.depth = 0
+        self.dispatch_table = Dict[String, String]()
 
     fn push(mut self, bytecode: JS_Bytecode):
         self.bytecodes.append(bytecode)
 
-    fn call(self, args: List[JS_Object] = List[JS_Object]()) raises -> Optional[JS_Object]:
+    fn call(self, parent: JS_VM, args: List[JS_Object] = List[JS_Object]()) raises -> Optional[JS_Object]:
         var new_vm = JS_VM()
+        for name in self.dispatch_table:
+            var mangled: String = self.dispatch_table[name]
+            new_vm.stack.Variables[name] = parent.stack.get_var(mangled)
         new_vm.main = self.bytecodes
 
         new_vm.run(args)
