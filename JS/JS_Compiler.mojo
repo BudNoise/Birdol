@@ -219,7 +219,14 @@ struct JS_Codegen:
             i -= 1
             return (FunctionScopeList.pop(), FunctionNameList.pop())
 
-        def generate_function_id()
+        def generate_function_id(parent: String, name: String):
+            var random_string = ""
+            var keyer = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+            for _ in range(12):
+                var num = random.random_ui64(0, len(keyer) - 1)
+                var letter = keyer[num]
+                random_string += letter
+            return String("Func_{}_{}_{}", parent, name, random_string)
 
         for node in ir.nodes:
             if node.type == JS_Node.Define_Variable:
