@@ -2,7 +2,10 @@ function fib(i) { var n = i; console.log(n); } fib()
 
 function help() {
     function inner() {
-        print("hey")
+        function inner() {
+            return "hey"
+        }
+        print(inner)
     }
     inner()
 }
