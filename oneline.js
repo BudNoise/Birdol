@@ -1,14 +1,21 @@
-function help() {
-    function helper() {
-        function willwilliam() {
-            __STD_PRINT_LOG__(69)
+function level1() {
+  __STD_PRINT_LOG__(1);
+  function level2() {
+    __STD_PRINT_LOG__(2);
+    function level3() {
+      __STD_PRINT_LOG__(3);
+      function level4() {
+        __STD_PRINT_LOG__(4);
+        function level5() {
+          __STD_PRINT_LOG__(5);
         }
-        willwilliam()
-        __STD_PRINT_LOG__(4)
-        __STD_PRINT_WARN__(5)
-        __STD_PRINT_ERROR__(6)
+        level5();
+      }
+      level4();
     }
-    helper()
+    level3();
+  }
+  level2();
 }
-var a = 585;
-help()
+
+level1();
