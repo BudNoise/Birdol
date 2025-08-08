@@ -6,13 +6,30 @@ struct JS_Stack(Copyable, Movable):
         self.Variables = Dict[String, JS_Object]()
         self.Pool = List[JS_Object]()
 
+    @staticmethod
+    def get_type(obj: JS_Object) -> String:
+        if obj.kind == JS_Object.OBJECT_INT:
+            return "[number]"
+        elif obj.kind == JS_Object.OBJECT_STRING:
+            return "[string]"
+        elif obj.kind == JS_Object.OBJECT_FUNC:
+            return "[function]"
+        elif obj.kind == JS_Object.OBJECT_DICT:
+            var output = "[object] = ["
+            for name in obj.dict:
+                output += Self.get_type(obj.dict[name])
+                output += ","
+            output += "]"
+            return output
+        return "[unknown]"
+
     fn dump(self) raises:
         print("Constants in the Stack Pool:")
         for obj in self.Pool:
             print("  Object with value:", obj.num)
         print("Variables in the Stack:")
         for obj2 in self.Variables:
-            print("  Object with name", obj2, "with value", self.Variables[obj2].num)
+            print("  Object with name", obj2, Self.get_type(self.Variables[obj2]))
     fn push(mut self, obj: JS_Object):
         self.Pool.append(obj)
     fn pop(mut self) -> JS_Object:

@@ -333,10 +333,13 @@ struct JS_Codegen:
                 var dispatch = MangledFuncScopes[Current_Depth - 1]
 
                 var func_name = CurrFnStack.pop()
+                var curr_name = func_name
                 # add the child functions
                 for name in Parent_Dict:
-                    if name == func_name:
+                    if name == curr_name:
                         dispatch[UnMangParent_Dict[name]] = Parent_Dict[name]
+                        curr_name = Parent_Dict[name]
+                        print(curr_name)
                     
                 popped[0].dispatch_table = dispatch
                 popped[0].depth = Current_Depth

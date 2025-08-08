@@ -48,9 +48,15 @@ struct JS_BytecodeFunc(Copyable, Movable):
 
     fn call(self, parent: JS_VM, args: List[JS_Object] = List[JS_Object]()) raises -> Optional[JS_Object]:
         var new_vm = JS_VM()
+        parent.stack.dump()
         for name in self.dispatch_table:
-            print("give me it", name)
+            #print("give me it", name, "mangled is", self.dispatch_table[name])
             var mangled: String = self.dispatch_table[name]
+            if mangled not in parent.stack.Variables:
+                mangled = name # lets see bro
+            if mangled not in parent.stack.Variables:
+                print("compiler doin some weird shi rn")
+                continue
             new_vm.stack.Variables[name] = parent.stack.get_var(mangled)
         new_vm.main = self.bytecodes
 

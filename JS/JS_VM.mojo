@@ -3,7 +3,7 @@ from .JS_Stack import *
 from .JS_Compiler import *
 from .standardlib import *
 from time import *
-alias DEBUG = True
+alias DEBUG = False
 alias MAX_FUNC_ARGS = 255
 @fieldwise_init
 struct BinaryExpr(Copyable, Movable):
