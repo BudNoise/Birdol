@@ -29,6 +29,5 @@ struct JS_Stack(Copyable, Movable):
         if ind < 0 or ind >= len(self.Pool):
             raise "wtf are you trying to do, getting out of bounds buddy?"
         return self.Pool[ind]
-
     fn last_const(self) -> JS_Object:
         return self.Pool[len(self.Pool) - 1]

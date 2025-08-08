@@ -1,9 +1,8 @@
 function help() {
     function helper() {
-        var i = 3;
-        __STD_PRINT__(i)
+        __STD_PRINT_LOG__(4)
+        __STD_PRINT_WARN__(5)
+        __STD_PRINT_ERROR__(6)
     }
-    var o = 9;
     helper()
 }
-help()

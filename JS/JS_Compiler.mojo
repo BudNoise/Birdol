@@ -7,6 +7,10 @@ def print_array[T: Stringable & Movable & Copyable](arr: List[T]):
     for elem in arr:
         print(String(elem) + " ")
     print()
+def print_dictionary[K: Writable & Copyable & Movable & Hashable & EqualityComparable, V: Writable & Stringable & Movable & Copyable](dict: Dict[K, V]):
+    for key in dict:
+        print("Key:", key, "Value:", dict[key])
+    print()
 struct JS_Tokenizer:
     alias Normal = 0
     alias OnString = 1
@@ -53,8 +57,6 @@ struct JS_Tokenizer:
 
         if curr_tok != "":
             toks.append(curr_tok)
-
-        print_array[String](toks)
 
         return toks
 
@@ -240,6 +242,7 @@ struct JS_Codegen:
             MangledFuncScopes.append(Dict[String, String]()) 
         var FuncList = Dict[String, JS_BytecodeFunc]()
         var Current_Depth = 0 # Main Func Depth
+        var Parent_Dict, UnMangParent_Dict = Dict[String, String](), Dict[String, String]()
 
         def push_to_depth(mut scopelist: List[JS_BytecodeFunc], depth: Int, bytecode: JS_Bytecode):
             scopelist[depth].push(bytecode)
@@ -315,30 +318,46 @@ struct JS_Codegen:
             elif node.type == JS_Node.Start_Function:
                 Current_Depth += 1
                 start_function(FunctionScopeList, node.data["name"])
+
                 var id = generate_function_id(CurrFnUnMangled[-1], node.data["name"]) if CurrFnUnMangled else node.data["name"]
                 MangledFuncScopes[Current_Depth][node.data["name"]] = id
+                if CurrFnStack:
+                    var n = CurrFnStack[-1]
+                    Parent_Dict[n] = id
+                    UnMangParent_Dict[n] = node.data["name"]
                 CurrFnStack.append(id)
                 CurrFnUnMangled.append(node.data["name"])
             elif node.type == JS_Node.End_Function:
                 var popped = pop_function(FunctionScopeList)
                 Current_Depth -= 1
-                var dispatch = MangledFuncScopes[Current_Depth]
+                var dispatch = MangledFuncScopes[Current_Depth - 1]
+
+                var func_name = CurrFnStack.pop()
+                # add the child functions
+                for name in Parent_Dict:
+                    if name == func_name:
+                        dispatch[UnMangParent_Dict[name]] = Parent_Dict[name]
+                    
                 popped[0].dispatch_table = dispatch
                 popped[0].depth = Current_Depth
-                var func_name = CurrFnStack.pop()
                 print("name:", func_name)
                 var _ = CurrFnUnMangled.pop()
                 FuncList[func_name] = popped[0]
                 MangledFuncScopes[Current_Depth] = Dict[String, String]()
             elif node.type == JS_Node.Call_Function:
+                var addington = {
+                    "name": node.data["name"],
+                    "arg_count": String(len(node.toks_list)), # temporal
+                    "parent_count": "0" # also temporal
+                }
+                var i = 0
+                for tok in node.toks_list:
+                    addington[String("arg_{}").format(i)] = tok
+                    i += 1
                 push_to_depth(FunctionScopeList, Current_Depth,
                     create_bytecode(
                         JS_BytecodeType.CALL,
-                        {
-                            "name": node.data["name"],
-                            "arg_count": "0", # temporal
-                            "parent_count": "0" # also temporal
-                        }
+                        addington
                     )
                 )
             

@@ -49,6 +49,7 @@ struct JS_BytecodeFunc(Copyable, Movable):
     fn call(self, parent: JS_VM, args: List[JS_Object] = List[JS_Object]()) raises -> Optional[JS_Object]:
         var new_vm = JS_VM()
         for name in self.dispatch_table:
+            print("give me it", name)
             var mangled: String = self.dispatch_table[name]
             new_vm.stack.Variables[name] = parent.stack.get_var(mangled)
         new_vm.main = self.bytecodes

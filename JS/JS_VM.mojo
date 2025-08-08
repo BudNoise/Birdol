@@ -254,6 +254,8 @@ struct JS_VM:
 
                     var funcfuncs = STD.get_funcs()
                     if funcname in funcfuncs:
+                        if DEBUG:
+                            print("ohyeah")
                         # turn all of the string vars into JS_Objects
                         var count = Int(bytecode.operand["arg_count"])
                         var arg_list = List[JS_Object]()
@@ -285,7 +287,15 @@ struct JS_VM:
                                     print(get_arg(i).num)
 
                         funcfuncs[funcname](arg_list)
+                    else:
+                        if funcname in self.stack.Variables:
+                            var obj = self.stack.get_var(funcname)
+                            if obj.kind != JS_Object.OBJECT_FUNC: # SHOW ME YO WILLEH
+                                raise "tf are you trying to do calling a non-function"
+                            var func = obj.func.value()
+                            func.call(self)
                 else:
+                    print("ah shit")
                     var count = Int(bytecode.operand["parent_count"])
                     var stackington = self.stack.Variables # console must be in the variables as a const
                     var previous_parent = stackington[bytecode.operand["parent_0"]]
